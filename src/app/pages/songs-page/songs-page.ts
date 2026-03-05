@@ -1,18 +1,21 @@
-import { Component, inject, signal } from '@angular/core';
+import { AfterViewInit, Component, inject, OnInit, signal } from '@angular/core';
 import { SongManager } from '../../services/song-manager';
 import { environment } from '../../../environments/environment.development';
-import { DatePipe } from '@angular/common';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Song } from '../../models/song.model';
+import { Song } from '../../interface/song.interface';
+import { DurationPipe } from '../../pipes/duration-pipe';
+import { FilesizePipe } from '../../pipes/filesize-pipe';
 
 @Component({
   selector: 'app-songs-page',
-  imports: [DatePipe, ReactiveFormsModule],
+  imports: [ReactiveFormsModule, DurationPipe, FilesizePipe],
   templateUrl: './songs-page.html',
   styleUrl: './songs-page.css',
 })
-export class SongsPage {
+export class SongsPage implements OnInit, AfterViewInit {
   public songManager = inject(SongManager);
+
+  private observer!: IntersectionObserver;
 
   backendUrl = environment.apiUrl.replace('/api', '');
 
@@ -24,6 +27,10 @@ export class SongsPage {
   currentSong = signal<Song | null>(null);
   isPlaying = signal(false);
   isLoadingAudio = signal(false);
+
+  ngOnInit() {
+    this.songManager.loadMore();
+  }
 
   uploadForm = new FormGroup({
     fileSource: new FormControl<File | null>(null, Validators.required),
@@ -82,7 +89,7 @@ export class SongsPage {
         await this.songManager.upload(fileSource, title);
 
         this.toggleForm(); // Cierra el formulario
-        this.songManager.songs.reload(); // Recarga la lista
+        this.songManager.refresh();
       }
     } catch (error) {
       console.error(error);
@@ -90,6 +97,23 @@ export class SongsPage {
     } finally {
       this.isUploading.set(false);
     }
+  }
+
+  ngAfterViewInit() {
+    this.observer = new IntersectionObserver(
+      (entries) => {
+        // Si el centinela es visible y NO estamos cargando ya
+        if (entries[0].isIntersecting && !this.songManager.loading()) {
+          this.songManager.loadMore();
+        }
+      },
+      {
+        threshold: 0.1, //la función se disparará cuando apenas el 10% del centinela sea visible
+      },
+    );
+
+    const sentinel = document.querySelector('#scroll-sentinel');
+    if (sentinel) this.observer.observe(sentinel);
   }
 
   togglePlay(song: Song) {
@@ -139,5 +163,9 @@ export class SongsPage {
   formatSize(bytes: string): string {
     const mb = parseInt(bytes) / (1024 * 1024);
     return mb.toFixed(2) + ' MB';
+  }
+
+  ngOnDestroy() {
+    if (this.observer) this.observer.disconnect();
   }
 }

@@ -69,7 +69,7 @@
     </div>
   }
 
-  @if (songManager.songs.isLoading()) {
+  @if (songManager.loading()) {
     <div class="flex justify-center mt-20">
       <div
         class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"
@@ -77,108 +77,84 @@
     </div>
   }
 
-  @if (songManager.songs.error()) {
+  @if (songManager.error()) {
     <div class="text-center py-10 text-red-400">
       <p>Error al cargar las canciones.</p>
     </div>
   }
 
-  <main class="max-w-4xl mx-auto space-y-4">
-    @if (
-      !songManager.songs.isLoading() &&
-      (!songManager.songs.value() || songManager.songs.value()?.length === 0)
-    ) {
+  <main class="relative max-w-4xl mx-auto space-y-4 pb-10">
+    @if (!songManager.loading() && songManager.songs().length === 0) {
       <div class="text-center py-20 bg-gray-900 rounded-xl border border-gray-800">
         <p class="text-gray-400 text-lg">No tienes canciones subidas aún.</p>
       </div>
     } @else {
-      @for (song of songManager.songs.value() ?? []; track song.id) {
+      @for (song of songManager.songs(); track song.id; let i = $index) {
         <div
           (click)="togglePlay(song)"
-          class="border rounded-xl p-4 flex flex-col sm:flex-row items-center gap-4 transition-all shadow-lg cursor-pointer group"
-          [class.bg-gray-800]="currentSong()?.id === song.id"
+          class="group flex items-center gap-4 p-3 rounded-lg transition-all cursor-pointer border-l-4"
+          [class.bg-white/5]="currentSong()?.id !== song.id"
+          [class.bg-indigo-500/10]="currentSong()?.id === song.id"
+          [class.border-transparent]="currentSong()?.id !== song.id"
           [class.border-indigo-500]="currentSong()?.id === song.id"
-          [class.bg-gray-900]="currentSong()?.id !== song.id"
-          [class.border-gray-800]="currentSong()?.id !== song.id"
-          [class.hover:border-gray-600]="currentSong()?.id !== song.id"
+          [class.hover:bg-white/10]="currentSong()?.id !== song.id"
         >
-          <div
-            class="h-14 w-14 rounded-full flex items-center justify-center shrink-0 transition-colors"
-            [class.bg-indigo-600]="currentSong()?.id === song.id"
-            [class.text-white]="currentSong()?.id === song.id"
-            [class.bg-gray-800]="currentSong()?.id !== song.id"
-            [class.group-hover:bg-gray-700]="currentSong()?.id !== song.id"
-          >
+          <div class="w-8 flex justify-center items-center text-sm font-medium text-gray-500">
             @if (currentSong()?.id === song.id && isPlaying()) {
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke-width="2"
-                stroke="currentColor"
-                class="w-8 h-8"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M15.75 5.25v13.5m-7.5-13.5v13.5"
-                />
-              </svg>
+              <div class="flex gap-0.5 items-end h-4">
+                <div class="w-1 bg-indigo-500 animate-bounce h-2"></div>
+                <div class="w-1 bg-indigo-500 animate-[bounce_1.2s_infinite] h-4"></div>
+                <div class="w-1 bg-indigo-500 animate-[bounce_0.8s_infinite] h-3"></div>
+              </div>
             } @else {
+              <span class="group-hover:hidden">{{ i + 1 }}</span>
               <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
+                class="hidden group-hover:block w-4 h-4 fill-current text-white"
                 viewBox="0 0 24 24"
-                stroke-width="2"
-                stroke="currentColor"
-                class="w-8 h-8 ml-1"
               >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z"
-                />
+                <path d="M8 5v14l11-7z" />
               </svg>
             }
           </div>
 
-          <div class="flex-1 text-center sm:text-left min-w-0">
+          <div class="flex-1 min-w-0">
             <h3
-              class="font-bold text-lg truncate transition-colors"
+              class="font-semibold truncate"
               [class.text-indigo-400]="currentSong()?.id === song.id"
               [class.text-white]="currentSong()?.id !== song.id"
             >
               {{ song.title }}
             </h3>
-            <div class="text-xs text-gray-500 flex gap-3 justify-center sm:justify-start mt-1">
-              <span>{{ song.created_at | date: 'mediumDate' }}</span>
-              <span>•</span>
-              <span>{{ formatSize(song.file_size) }}</span>
-            </div>
+            <p class="text-xs text-gray-400 truncate">{{ song.artist }}</p>
           </div>
 
-          @if (currentSong()?.id === song.id && isPlaying()) {
-            <div class="flex gap-1 items-end h-6 mr-4">
-              <div class="w-1 bg-indigo-500 animate-bounce h-3"></div>
-              <div class="w-1 bg-indigo-500 animate-[bounce_1.2s_infinite] h-5"></div>
-              <div class="w-1 bg-indigo-500 animate-[bounce_0.8s_infinite] h-4"></div>
-              <div class="w-1 bg-indigo-500 animate-[bounce_1.1s_infinite] h-2"></div>
-            </div>
-          } @else {
+          <div class="hidden sm:flex flex-col items-end text-xs text-gray-500 gap-1">
+            <span class="font-mono">{{ song.duration | duration }}</span>
+            <span>{{ song.file_size | filesize }}</span>
+          </div>
+
+          <div class="flex items-center gap-3">
             <button
-              (click)="songManager.delete(song.id)"
-              class="flex justify-center items-center h-6 mr-4 cursor-pointer hover:scale-125 duration-150"
+              (click)="$event.stopPropagation(); songManager.delete(song.id)"
+              class="p-2 text-gray-500 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="w-5 h-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
                 <path
-                  fill="currentColor"
-                  d="M7 21q-.825 0-1.412-.587T5 19V6q-.425 0-.712-.288T4 5t.288-.712T5 4h4q0-.425.288-.712T10 3h4q.425 0 .713.288T15 4h4q.425 0 .713.288T20 5t-.288.713T19 6v13q0 .825-.587 1.413T17 21zM17 6H7v13h10zm-7 11q.425 0 .713-.288T11 16V9q0-.425-.288-.712T10 8t-.712.288T9 9v7q0 .425.288.713T10 17m4 0q.425 0 .713-.288T15 16V9q0-.425-.288-.712T14 8t-.712.288T13 9v7q0 .425.288.713T14 17M7 6v13z"
+                  d="M3 6h18m-2 0v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
                 />
               </svg>
             </button>
-          }
+          </div>
         </div>
       }
+      <div id="scroll-sentinel" class="absolute bottom-96 w-full h-10"></div>
     }
   </main>
 </div>
