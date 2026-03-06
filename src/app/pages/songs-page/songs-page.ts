@@ -5,6 +5,7 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Song } from '../../interface/song.interface';
 import { DurationPipe } from '../../pipes/duration-pipe';
 import { FilesizePipe } from '../../pipes/filesize-pipe';
+import { PlaybackManager } from '../../services/playback-manager';
 
 @Component({
   selector: 'app-songs-page',
@@ -14,7 +15,7 @@ import { FilesizePipe } from '../../pipes/filesize-pipe';
 })
 export class SongsPage implements OnInit, AfterViewInit {
   public songManager = inject(SongManager);
-
+  public playbackManager = inject(PlaybackManager);
   private observer!: IntersectionObserver;
 
   backendUrl = environment.apiUrl.replace('/api', '');
@@ -23,10 +24,6 @@ export class SongsPage implements OnInit, AfterViewInit {
   showForm = signal(false);
   isUploading = signal(false);
   errorMessage = signal<string | null>(null);
-
-  currentSong = signal<Song | null>(null);
-  isPlaying = signal(false);
-  isLoadingAudio = signal(false);
 
   ngOnInit() {
     this.songManager.loadMore();
@@ -117,47 +114,7 @@ export class SongsPage implements OnInit, AfterViewInit {
   }
 
   togglePlay(song: Song) {
-    const isSameSong = this.currentSong()?.id === song.id;
-
-    if (isSameSong) {
-      if (this.isPlaying()) {
-        this.audio.pause();
-        this.isPlaying.set(false);
-      } else {
-        this.audio.play();
-        this.isPlaying.set(true);
-      }
-    } else {
-      this.currentSong.set(song);
-      this.isPlaying.set(false);
-      this.isLoadingAudio.set(true);
-
-      this.songManager.getAudioBlob(song.id).subscribe({
-        next: (blob) => {
-          if (this.currentObjectUrl) URL.revokeObjectURL(this.currentObjectUrl);
-
-          this.currentObjectUrl = URL.createObjectURL(blob);
-
-          this.audio.src = this.currentObjectUrl;
-          this.audio.load();
-          this.audio
-            .play()
-            .then(() => {
-              this.isPlaying.set(true);
-              this.isLoadingAudio.set(false);
-            })
-            .catch((err) => console.error('Error play:', err));
-        },
-        error: (err) => {
-          console.error('Error descargando audio:', err);
-          this.isLoadingAudio.set(false);
-        },
-      });
-    }
-
-    this.audio.onended = () => {
-      this.isPlaying.set(false);
-    };
+    this.playbackManager.playSong(song);
   }
 
   formatSize(bytes: string): string {

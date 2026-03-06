@@ -18,7 +18,7 @@ export class SongManager {
   isAllSongsLoaded = signal<boolean>(false);
   error = signal<string | null>(null);
 
-  async loadMore(limit: number = 30) {
+  async loadMore(limit: number = 15) {
     if (this.isAllSongsLoaded()) return; // Evitar peticiones inecesarias
     if (this.loading()) return; // Evitar múltiples peticiones
 
@@ -31,7 +31,7 @@ export class SongManager {
         this.http.get<PaginatedSongs>(`${this.apiUrl}?page=${page}&limit=${limit}`),
       );
 
-      if (data.data.length < limit) this.isAllSongsLoaded.set(true); // Marca que se han cargado todas las canciones
+      this.isAllSongsLoaded.set(data.data.length < limit); // Marca que se han cargado todas las canciones
 
       this.songs.update((current) => [...current, ...data.data]);
       this.currentPage.update((p) => p + 1);
@@ -55,6 +55,25 @@ export class SongManager {
     formData.append('file', file);
 
     return await firstValueFrom(this.http.post(this.apiUrl, formData));
+  }
+
+  // song-manager.ts
+  async shuffle(limit: number = 15): Promise<Song[]> {
+    this.loading.set(true);
+
+    try {
+      const data = await firstValueFrom(
+        this.http.post<PaginatedSongs>(`${this.apiUrl}/shuffle?limit=${limit}`, {}),
+      );
+
+      this.songs.set(data.data);
+      this.currentPage.set(2);
+      this.isAllSongsLoaded.set(data.data.length < limit);
+
+      return data.data;
+    } finally {
+      this.loading.set(false);
+    }
   }
 
   async delete(songId: number) {

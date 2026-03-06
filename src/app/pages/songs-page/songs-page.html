@@ -93,14 +93,14 @@
         <div
           (click)="togglePlay(song)"
           class="group flex items-center gap-4 p-3 rounded-lg transition-all cursor-pointer border-l-4"
-          [class.bg-white/5]="currentSong()?.id !== song.id"
-          [class.bg-indigo-500/10]="currentSong()?.id === song.id"
-          [class.border-transparent]="currentSong()?.id !== song.id"
-          [class.border-indigo-500]="currentSong()?.id === song.id"
-          [class.hover:bg-white/10]="currentSong()?.id !== song.id"
+          [class.bg-white/5]="playbackManager.currentSong()?.id !== song.id"
+          [class.bg-indigo-500/10]="playbackManager.currentSong()?.id === song.id"
+          [class.border-transparent]="playbackManager.currentSong()?.id !== song.id"
+          [class.border-indigo-500]="playbackManager.currentSong()?.id === song.id"
+          [class.hover:bg-white/10]="playbackManager.currentSong()?.id !== song.id"
         >
           <div class="w-8 flex justify-center items-center text-sm font-medium text-gray-500">
-            @if (currentSong()?.id === song.id && isPlaying()) {
+            @if (playbackManager.currentSong()?.id === song.id && playbackManager.isPlaying()) {
               <div class="flex gap-0.5 items-end h-4">
                 <div class="w-1 bg-indigo-500 animate-bounce h-2"></div>
                 <div class="w-1 bg-indigo-500 animate-[bounce_1.2s_infinite] h-4"></div>
@@ -120,8 +120,8 @@
           <div class="flex-1 min-w-0">
             <h3
               class="font-semibold truncate"
-              [class.text-indigo-400]="currentSong()?.id === song.id"
-              [class.text-white]="currentSong()?.id !== song.id"
+              [class.text-indigo-400]="playbackManager.currentSong()?.id === song.id"
+              [class.text-white]="playbackManager.currentSong()?.id !== song.id"
             >
               {{ song.title }}
             </h3>
