@@ -3,11 +3,11 @@
     class="fixed bottom-0 left-0 right-0 bg-gray-900/95 backdrop-blur-md border-t border-gray-800 p-4 z-50"
   >
     <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-4">
-      <div class="flex flex-col items-start gap-4 w-full md:w-1/4">
-        <h4 class="text-white font-semibold truncate">
+      <div class="flex flex-col items-start gap-1 w-full md:w-1/4">
+        <h4 class="text-white font-semibold truncate md:max-w-50">
           {{ playbackManager.currentSong()?.title }}
         </h4>
-        <p class="text-gray-400 text-xs truncate">
+        <p class="text-gray-400 text-xs truncate md:max-w-36">
           {{ playbackManager.currentSong()?.artist || 'Artista desconocido' }}
         </p>
       </div>
@@ -15,16 +15,8 @@
       <div class="flex flex-col items-center gap-2 flex-1 w-full">
         <div class="flex items-center gap-6">
           <button
-            (click)="playbackManager.shuffleAndPlay()"
-            [disabled]="songManager.loading()"
-            class="text-gray-400 hover:text-indigo-400 transition-colors disabled:opacity-30"
-          >
-            <span class="text-lg">🔀</span>
-          </button>
-
-          <button
             (click)="playbackManager.previous()"
-            class="text-white hover:text-indigo-400 transition-colors"
+            class="text-white hover:text-indigo-400 transition-colors cursor-pointer"
           >
             <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
               <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
@@ -33,7 +25,7 @@
 
           <button
             (click)="playbackManager.togglePlay()"
-            class="bg-white hover:scale-105 text-black p-3 rounded-full transition-all shadow-lg"
+            class="bg-white hover:scale-105 text-black p-3 rounded-full transition-all shadow-lg cursor-pointer"
           >
             @if (playbackManager.isPlaying()) {
               <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
@@ -46,7 +38,7 @@
 
           <button
             (click)="playbackManager.next()"
-            class="text-white hover:text-indigo-400 transition-colors"
+            class="text-white hover:text-indigo-400 transition-colors cursor-pointer"
           >
             <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
               <path d="M6 18l8.5-6L6 6zm9-12v12h2V6z" />
@@ -55,7 +47,18 @@
         </div>
 
         <div class="flex items-center gap-3 w-full max-w-md text-xs font-mono text-gray-500">
-          <span>{{ playbackManager.currentTime() | duration }}</span>
+          <span
+            (mouseenter)="isTimeHovered.set(true)"
+            (mouseleave)="isTimeHovered.set(false)"
+            (click)="playbackManager.reset()"
+            class="cursor-pointer min-w-11 text-end hover:text-white"
+          >
+            @if (isTimeHovered()) {
+              reset
+            } @else {
+              {{ playbackManager.currentTime() | duration }}
+            }
+          </span>
           <input
             type="range"
             class="player-range flex-1 h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
@@ -67,17 +70,27 @@
         </div>
       </div>
 
-      <div class="hidden md:flex items-center gap-3 w-1/4 justify-end">
-        <span class="text-gray-400 text-sm">🔈</span>
-        <input
-          type="range"
-          min="0"
-          max="1"
-          step="0.05"
-          class="w-24 h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-gray-400 hover:accent-indigo-500"
-          [value]="playbackManager.volume()"
-          (input)="onVolume($event)"
-        />
+      <div class="w-1/4 flex justify-end gap-10">
+        <button
+          (click)="playbackManager.shuffleAndPlay()"
+          [disabled]="songManager.loading()"
+          class="text-gray-400 hover:text-indigo-400 transition-colors disabled:opacity-30 cursor-pointer"
+        >
+          <span class="text-lg">🔀</span>
+        </button>
+
+        <div class="hidden md:flex items-center gap-3 justify-end">
+          <span class="text-gray-400 text-sm">🔈</span>
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.05"
+            class="w-24 h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-gray-400 hover:accent-indigo-500"
+            [value]="playbackManager.volume()"
+            (input)="onVolume($event)"
+          />
+        </div>
       </div>
     </div>
   </div>

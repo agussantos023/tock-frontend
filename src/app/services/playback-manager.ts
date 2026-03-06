@@ -75,6 +75,16 @@ export class PlaybackManager {
     }
   }
 
+  reset() {
+    this.audio.currentTime = 0;
+
+    // Si estaba pausada empieza automaticamente
+    if (!this.isPlaying()) {
+      this.audio.play();
+      this.isPlaying.set(true);
+    }
+  }
+
   updateVolume(value: number) {
     this.audio.volume = value;
     this.volume.set(value);

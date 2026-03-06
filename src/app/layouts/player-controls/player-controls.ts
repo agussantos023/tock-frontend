@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { PlaybackManager } from '../../services/playback-manager';
 import { SongManager } from '../../services/song-manager';
 import { DurationPipe } from '../../pipes/duration-pipe';
@@ -12,6 +12,8 @@ import { DurationPipe } from '../../pipes/duration-pipe';
 export class PlayerControls {
   protected songManager = inject(SongManager);
   protected playbackManager = inject(PlaybackManager);
+
+  isTimeHovered = signal<boolean>(false);
 
   onSeek(event: any) {
     this.playbackManager.seek(event.target.value);
