@@ -1,0 +1,19 @@
+<div class="flex items-center gap-3 w-40 group/vol">
+  <div
+    class="relative flex-1 h-8 flex items-center gap-0.5 cursor-pointer"
+    (mousedown)="onBarClick($event)"
+  >
+    @for (bar of volumeBars; track $index) {
+      <div
+        class="vol-bar rounded-full flex-1"
+        [class.vol-bar-active]="
+          $index / volumeBars.length < playbackManager.volume() && playbackManager.isPlaying()
+        "
+        [class.bg-indigo-500]="$index / volumeBars.length < playbackManager.volume()"
+        [class.bg-gray-700]="$index / volumeBars.length >= playbackManager.volume()"
+        [style.--i]="bar.randomDelay"
+        [style.--vol]="playbackManager.volume()"
+      ></div>
+    }
+  </div>
+</div>

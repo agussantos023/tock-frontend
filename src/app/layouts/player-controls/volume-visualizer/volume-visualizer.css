@@ -1,0 +1,22 @@
+.vol-bar {
+  height: 14px; /* Altura fija */
+  width: 3px;
+  transition: background-color 0.2s ease;
+}
+
+@keyframes volBounce {
+  0% {
+    transform: translateY(5px);
+  }
+  100% {
+    /* Se mueve hacia arriba basándose en el volumen */
+    transform: translateY(calc(-10px * (var(--vol) * 2))); /* Multiplicador */
+  }
+}
+
+.vol-bar-active {
+  /* Usamos 'alternate' para que suba y baje */
+  animation: volBounce 0.4s ease-in-out infinite alternate;
+  /* El delay aleatorio que ya tienes en el TS */
+  animation-delay: calc(var(--i) * -1s);
+}
