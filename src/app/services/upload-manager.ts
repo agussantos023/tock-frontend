@@ -195,6 +195,15 @@ export class UploadManager {
     });
   }
 
+  removeFromQueue(id: string) {
+    const task = this.queue().find((task) => task.id === id);
+
+    // Evitar borrar si ya se está subiendo o convirtiendo
+    if (task?.status === 'uploading' || task?.status === 'converting') return;
+
+    this.queue.update((tasks) => tasks.filter((t) => t.id !== id));
+  }
+
   // Helpers de Estado
 
   private updateTaskStatus(id: string, status: UploadStatus, progress: number) {

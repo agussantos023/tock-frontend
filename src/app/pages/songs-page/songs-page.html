@@ -4,70 +4,144 @@
       <h1 class="text-3xl font-bold text-white tracking-tight">Mis Canciones</h1>
       <p class="text-gray-400 text-sm mt-1">Tu biblioteca personal</p>
     </div>
-    <button
-      (click)="toggleForm()"
-      class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg font-medium transition-colors cursor-pointer"
-    >
-      {{ showForm() ? 'Cancelar' : '+ Subir Canción' }}
-    </button>
-  </header>
 
-  @if (showForm()) {
-    <div
-      class="max-w-4xl mx-auto mb-8 bg-gray-900 p-6 rounded-xl border border-gray-700 animate-fade-in"
-    >
-      <h3 class="text-white font-bold mb-4">Nueva Canción</h3>
+    <div class="relative">
+      <button
+        (click)="toggleForm()"
+        class="w-40 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg font-medium transition-colors cursor-pointer"
+      >
+        {{ showForm() ? 'Cerrar' : '+ Subir Canción' }}
+      </button>
 
-      <form [formGroup]="uploadForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-4">
-        @if (errorMessage()) {
+      @if (showForm()) {
+        <div
+          class="absolute right-0 top-14 w-112.5 bg-slate-900 border border-slate-700 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col max-h-[80vh] overflow-hidden z-30"
+        >
           <div
-            class="bg-red-900/50 border border-red-500 text-red-200 p-3 rounded-lg text-sm flex items-center gap-2"
+            class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50"
           >
-            <span>🚫</span> {{ errorMessage() }}
+            <h3 class="text-white font-bold flex items-center gap-2">
+              <span class="text-indigo-500">⚡</span> Estación de Transcodificación
+            </h3>
           </div>
-        }
 
-        <div class="relative">
-          <input
-            type="file"
-            accept="audio/mpeg"
-            (change)="onFileChange($event)"
-            class="block w-full text-sm text-gray-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-gray-800 file:text-indigo-400 hover:file:bg-gray-700 cursor-pointer border border-gray-700 rounded-lg bg-gray-800/50 focus:outline-none focus:border-indigo-500 transition-colors"
-          />
-        </div>
+          <div
+            (click)="fileInput.click()"
+            (dragover)="onDragOver($event)"
+            (dragleave)="onDragLeave()"
+            (drop)="handleDrop($event)"
+            [class.border-indigo-500]="isDragging()"
+            [class.bg-indigo-500/5]="isDragging()"
+            [class.border-dashed]="isDragging()"
+            class="m-4 border-2 border-slate-700 rounded-xl px-8 py-4 text-center transition-all group relative cursor-pointer"
+          >
+            <input
+              #fileInput
+              type="file"
+              multiple
+              accept="audio/mpeg"
+              (change)="onFilesSelected($event)"
+              class="hidden"
+            />
 
-        @if (uploadForm.value.fileSource) {
-          <div class="animate-fade-in flex flex-col gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-400 mb-2">
-                Título de la canción
-              </label>
-              <input
-                type="text"
-                formControlName="title"
-                class="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-              />
+            <div class="flex flex-col items-center gap-3">
+              <div
+                class="w-12 h-10 rounded-full bg-slate-800 flex items-center justify-center group-hover:scale-110 transition-transform"
+              >
+                <span class="text-2xl">📥</span>
+              </div>
+              <div>
+                <p class="text-slate-200 font-medium">Arrastra tus MP3 aquí</p>
+                <p class="text-slate-500 text-sm">o haz clic para explorar</p>
+              </div>
             </div>
-
-            <button
-              type="submit"
-              [disabled]="uploadForm.invalid || isUploading()"
-              class="bg-green-600 hover:bg-green-500 disabled:bg-gray-700 disabled:text-gray-500 text-white font-bold py-2.5 px-4 rounded-lg transition-colors w-full sm:w-auto self-end flex justify-center items-center gap-2 cursor-pointer"
-            >
-              @if (isUploading()) {
-                <div
-                  class="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin"
-                ></div>
-                Subiendo...
-              } @else {
-                Guardar Canción
-              }
-            </button>
           </div>
-        }
-      </form>
+
+          <div class="flex-1 overflow-y-auto px-4 space-y-2 mb-4 custom-scrollbar">
+            @for (task of uploadManager.queue(); track task.id) {
+              <div
+                class="bg-slate-800/40 border border-slate-700/50 rounded-lg p-3 flex flex-col gap-2 group/item"
+              >
+                <div class="flex justify-between items-center">
+                  <div class="flex items-center gap-3 overflow-hidden">
+                    @if (task.status === 'success') {
+                      <span class="text-green-500">✅</span>
+                    } @else if (task.status === 'error') {
+                      <span class="text-red-500">❌</span>
+                    } @else if (task.status === 'converting') {
+                      <span class="animate-spin text-blue-400 text-xs">⚙️</span>
+                    } @else if (task.status === 'uploading') {
+                      <span class="animate-bounce text-yellow-400 text-xs">⬆️</span>
+                    } @else {
+                      <span class="text-slate-500 text-xs">⏳</span>
+                    }
+
+                    <span class="text-sm text-slate-200 truncate font-medium pr-1">
+                      {{ task.title }}
+                    </span>
+                  </div>
+
+                  @if (!uploadManager.isProcessing() && task.status === 'pending') {
+                    <button
+                      (click)="uploadManager.removeFromQueue(task.id)"
+                      class="opacity-0 group-hover/item:opacity-100 text-slate-500 hover:text-red-400 transition-all text-xs cursor-pointer"
+                    >
+                      Quitar
+                    </button>
+                  }
+                </div>
+
+                <div class="w-full bg-slate-950 h-1.5 rounded-full overflow-hidden">
+                  <div
+                    class="h-full transition-all duration-500 ease-out"
+                    [style.width.%]="task.progress"
+                    [class.bg-blue-500]="task.status === 'converting'"
+                    [class.bg-yellow-500]="task.status === 'uploading'"
+                    [class.bg-green-500]="task.status === 'success'"
+                    [class.bg-red-500]="task.status === 'error'"
+                  ></div>
+                </div>
+
+                @if (task.error) {
+                  <p class="text-[10px] text-red-400 italic">{{ task.error }}</p>
+                }
+              </div>
+            } @empty {
+              <div class="text-center py-10 opacity-30">
+                <p class="text-sm italic">La cola está vacía</p>
+              </div>
+            }
+          </div>
+
+          <div
+            class="p-4 bg-slate-950/50 border-t border-slate-800 flex justify-between items-center"
+          >
+            <button
+              (click)="uploadManager.clearQueue()"
+              [disabled]="uploadManager.isProcessing() || uploadManager.queue().length === 0"
+              class="text-xs text-slate-500 hover:text-white transition-colors disabled:opacity-50 disabled:hover:text-slate-500 cursor-pointer"
+            >
+              Limpiar todo
+            </button>
+
+            <div class="flex gap-3">
+              <button
+                (click)="uploadManager.startUploads()"
+                [disabled]="uploadManager.isProcessing() || uploadManager.queue().length === 0"
+                class="bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-600 text-white px-6 py-2 rounded-lg font-bold transition-all flex items-center gap-2 text-sm shadow-lg shadow-indigo-500/20 cursor-pointer"
+              >
+                @if (uploadManager.isProcessing()) {
+                  <span class="animate-spin text-xs">⏳</span> Procesando...
+                } @else {
+                  Empezar Subida
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+      }
     </div>
-  }
+  </header>
 
   @if (songManager.loading()) {
     <div class="flex justify-center mt-20">

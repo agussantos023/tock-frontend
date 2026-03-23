@@ -6,6 +6,7 @@ import { Song } from '../../interface/song.interface';
 import { DurationPipe } from '../../pipes/duration-pipe';
 import { FilesizePipe } from '../../pipes/filesize-pipe';
 import { PlaybackManager } from '../../services/playback-manager';
+import { UploadManager } from '../../services/upload-manager';
 
 @Component({
   selector: 'app-songs-page',
@@ -16,12 +17,15 @@ import { PlaybackManager } from '../../services/playback-manager';
 export class SongsPage implements OnInit, AfterViewInit {
   public songManager = inject(SongManager);
   public playbackManager = inject(PlaybackManager);
+  public uploadManager = inject(UploadManager);
+
   private observer!: IntersectionObserver;
 
   backendUrl = environment.apiUrl.replace('/api', '');
 
   // UI State
   showForm = signal(false);
+  isDragging = signal(false);
   isUploading = signal(false);
   errorMessage = signal<string | null>(null);
 
@@ -120,6 +124,47 @@ export class SongsPage implements OnInit, AfterViewInit {
   formatSize(bytes: string): string {
     const mb = parseInt(bytes) / (1024 * 1024);
     return mb.toFixed(2) + ' MB';
+  }
+
+  // --- MÉTODOS DE CAPTURA ---
+
+  onFilesSelected(event: any) {
+    const files = event.target.files;
+    this.handleFiles(files);
+  }
+
+  handleDrop(event: DragEvent) {
+    event.preventDefault();
+    this.isDragging.set(false);
+    const files = event.dataTransfer?.files;
+    this.handleFiles(files);
+  }
+
+  private handleFiles(files: FileList | null | undefined) {
+    if (!files || files.length === 0) return;
+
+    // Filtramos solo archivos MP3
+    const mp3Files = Array.from(files).filter(
+      (file) => file.type === 'audio/mpeg' || file.name.toLowerCase().endsWith('.mp3'),
+    );
+
+    if (mp3Files.length === 0) {
+      alert('Por favor, selecciona solo archivos MP3.');
+      return;
+    }
+
+    this.uploadManager.addFilesToQueue(mp3Files);
+  }
+
+  // --- HELPERS VISUALES ---
+
+  onDragOver(event: DragEvent) {
+    event.preventDefault();
+    this.isDragging.set(true);
+  }
+
+  onDragLeave() {
+    this.isDragging.set(false);
   }
 
   ngOnDestroy() {
