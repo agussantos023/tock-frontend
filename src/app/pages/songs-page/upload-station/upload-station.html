@@ -1,0 +1,376 @@
+<div
+  class="absolute right-0 top-14 w-112.5 bg-slate-900 border border-slate-700 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col max-h-[80vh] overflow-hidden z-30"
+>
+  <header class="p-4 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md">
+    <div class="flex justify-between items-start mb-3">
+      <div class="flex flex-col">
+        <h3 class="text-white font-bold flex items-center gap-2 text-sm">
+          <span class="text-indigo-400 text-base">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+              <path
+                fill="currentColor"
+                d="M6.5 20q-2.275 0-3.887-1.575T1 14.575q0-1.95 1.175-3.475T5.25 9.15q.625-2.3 2.5-3.725T12 4q2.925 0 4.963 2.038T19 11q1.725.2 2.863 1.488T23 15.5q0 1.875-1.312 3.188T18.5 20zm0-2h12q1.05 0 1.775-.725T21 15.5t-.725-1.775T18.5 13H17v-2q0-2.075-1.463-3.538T12 6T8.463 7.463T7 11h-.5q-1.45 0-2.475 1.025T3 14.5t1.025 2.475T6.5 18m5.5-6"
+              />
+            </svg>
+          </span>
+          Estación de Subida
+        </h3>
+        <span class="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
+          Gestión de cola de archivos
+        </span>
+      </div>
+
+      <span
+        class="text-xs font-bold px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-500 w-24 flex justify-between"
+      >
+        <span>CUPO</span><span>{{ uploadManager.totalFiles() }}/50</span>
+      </span>
+    </div>
+
+    <div class="flex gap-2">
+      @if (uploadManager.pendingCount()) {
+        <button
+          animate.enter="stats-enter"
+          animate.leave="stats-leave"
+          (click)="uploadManager.clearByStatus('pending')"
+          [disabled]="uploadManager.isProcessing() || uploadManager.pendingCount() === 0"
+          class="group relative flex-1 bg-slate-800/40 border border-slate-700/50 cursor-pointer rounded-lg py-1.5 px-2 flex flex-col items-center transition-all hover:border-indigo-500/50 hover:bg-indigo-500/5 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
+        >
+          <div class="flex flex-col items-center transition-all group-hover:-translate-y-8">
+            <span class="text-[9px] text-slate-500 font-bold uppercase">Pendientes</span>
+            <span class="text-xs font-bold text-indigo-400">{{
+              uploadManager.pendingCount()
+            }}</span>
+          </div>
+          <div
+            class="absolute inset-0 flex flex-col items-center justify-center translate-y-8 group-hover:translate-y-0 transition-all text-indigo-400"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"
+              />
+            </svg>
+            <span class="text-[8px] font-bold uppercase mt-1">Limpiar</span>
+          </div>
+        </button>
+      }
+
+      @if (uploadManager.successCount()) {
+        <button
+          animate.enter="stats-enter"
+          animate.leave="stats-leave"
+          (click)="uploadManager.clearByStatus('success')"
+          [disabled]="uploadManager.isProcessing() || uploadManager.successCount() === 0"
+          class="group relative flex-1 bg-green-500/5 border cursor-pointer border-green-500/20 rounded-lg py-1.5 px-2 flex flex-col items-center transition-all hover:border-green-500/50 hover:bg-green-500/10 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
+        >
+          <div class="flex flex-col items-center transition-all group-hover:-translate-y-8">
+            <span class="text-[9px] text-green-500/60 font-bold uppercase">Éxito</span>
+            <span class="text-xs font-bold text-green-400">{{ uploadManager.successCount() }}</span>
+          </div>
+          <div
+            class="absolute inset-0 flex flex-col items-center justify-center translate-y-8 group-hover:translate-y-0 transition-all text-green-400"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"
+              />
+            </svg>
+            <span class="text-[8px] font-bold uppercase mt-1">Limpiar</span>
+          </div>
+        </button>
+      }
+
+      @if (uploadManager.errorCount()) {
+        <button
+          animate.enter="stats-enter"
+          animate.leave="stats-leave"
+          (click)="uploadManager.clearByStatus('error')"
+          [disabled]="uploadManager.isProcessing() || uploadManager.errorCount() === 0"
+          class="group relative flex-1 bg-red-500/5 border cursor-pointer border-red-500/20 rounded-lg py-1.5 px-2 flex flex-col items-center transition-all hover:border-red-500/50 hover:bg-red-500/10 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
+        >
+          <div class="flex flex-col items-center transition-all group-hover:-translate-y-8">
+            <span class="text-[9px] text-red-500/60 font-bold uppercase">Error</span>
+            <span class="text-xs font-bold text-red-400">{{ uploadManager.errorCount() }}</span>
+          </div>
+          <div
+            class="absolute inset-0 flex flex-col items-center justify-center translate-y-8 group-hover:translate-y-0 transition-all text-red-400"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"
+              />
+            </svg>
+            <span class="text-[8px] font-bold uppercase mt-1">Limpiar</span>
+          </div>
+        </button>
+      }
+    </div>
+  </header>
+  @if (!uploadManager.isStorageFull()) {
+    <div
+      (click)="!uploadManager.isQueueFull() && fileInput.click()"
+      (dragover)="!uploadManager.isQueueFull() && onDragOver($event)"
+      (dragleave)="onDragLeave()"
+      (drop)="!uploadManager.isQueueFull() && handleDrop($event)"
+      [class.border-indigo-500]="isDragging() && !uploadManager.isQueueFull()"
+      [class.bg-indigo-500/10]="isDragging() && !uploadManager.isQueueFull()"
+      [class.opacity-40]="uploadManager.isQueueFull()"
+      [class.cursor-not-allowed]="uploadManager.isQueueFull()"
+      [class.grayscale]="uploadManager.isQueueFull()"
+      [class.cursor-pointer]="!uploadManager.isQueueFull()"
+      [class.cursor-not-allowed]="uploadManager.isQueueFull()"
+      class="m-4 border-2 border-slate-700 border-dashed rounded-xl px-8 py-6 text-center transition-all group relative"
+    >
+      <input
+        #fileInput
+        type="file"
+        multiple
+        accept="audio/mpeg"
+        (change)="onFilesSelected($event)"
+        class="hidden"
+        [disabled]="uploadManager.isQueueFull()"
+      />
+
+      <div class="flex flex-col items-center gap-3">
+        <div
+          class="w-12 h-12 rounded-full flex items-center justify-center transition-transform"
+          [class.bg-slate-800]="!uploadManager.isQueueFull()"
+          [class.bg-red-500/10]="uploadManager.isQueueFull()"
+          [class.group-hover:scale-110]="!uploadManager.isQueueFull()"
+        >
+          @if (uploadManager.isQueueFull()) {
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              class="text-red-500"
+            >
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+          } @else {
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              class="text-indigo-400"
+            >
+              <path
+                fill="currentColor"
+                d="M6 20q-.825 0-1.412-.587T4 18v-2q0-.425.288-.712T5 15t.713.288T6 16v2h12v-2q0-.425.288-.712T19 15t.713.288T20 16v2q0 .825-.587 1.413T18 20zm5-12.15L9.125 9.725q-.3.3-.712.288T7.7 9.7q-.275-.3-.288-.7t.288-.7l3.6-3.6q.15-.15.325-.212T12 4.425t.375.063t.325.212l3.6 3.6q.3.3.288.7t-.288.7q-.3.3-.712.313t-.713-.288L13 7.85V15q0 .425-.288.713T12 16t-.712-.288T11 15z"
+              />
+            </svg>
+          }
+        </div>
+
+        <div>
+          @if (uploadManager.isQueueFull()) {
+            <p class="text-red-400 font-bold text-sm">Cola llena (50/50)</p>
+            <p class="text-slate-500 text-[11px]">Limpia archivos completados para añadir más</p>
+          } @else {
+            <p class="text-slate-200 font-medium">Arrastra tus MP3 aquí</p>
+            <p class="text-slate-500 text-sm">o haz clic para explorar</p>
+          }
+        </div>
+      </div>
+    </div>
+  } @else {
+    <div
+      class="m-4 border-2 border-red-500/30 bg-red-500/5 rounded-xl px-8 py-6 text-center flex flex-col items-center justify-center gap-3 min-h-37"
+    >
+      <div
+        class="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center text-red-500 animate-pulse"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path
+            d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+          ></path>
+          <line x1="12" y1="9" x2="12" y2="13"></line>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+      </div>
+      <div>
+        <p class="text-red-400 font-bold text-sm uppercase tracking-tight">
+          Almacenamiento Agotado
+        </p>
+        <p class="text-slate-500 text-[12px] leading-relaxed max-w-64 mx-auto">
+          Has alcanzado tu límite de almacenamiento. Borra contenido.
+        </p>
+      </div>
+    </div>
+  }
+
+  <div class="flex-1 overflow-y-auto px-4 space-y-2 mb-4 custom-scrollbar">
+    @for (task of uploadManager.queue(); track task.id) {
+      <div
+        animate.enter="task-enter"
+        animate.leave="task-leave"
+        class="bg-slate-800/40 border border-slate-700/50 rounded-lg p-3 flex flex-col gap-2 group/item"
+      >
+        <div class="flex justify-between items-center w-full gap-4">
+          <div class="flex items-center gap-2 overflow-hidden flex-1 min-w-0">
+            @if (task.status === 'success') {
+              <span class="text-green-500">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                  <path
+                    fill="currentColor"
+                    d="m10 13.6l5.9-5.9q.275-.275.7-.275t.7.275t.275.7t-.275.7l-6.6 6.6q-.3.3-.7.3t-.7-.3l-2.6-2.6q-.275-.275-.275-.7t.275-.7t.7-.275t.7.275z"
+                  />
+                </svg>
+              </span>
+            } @else if (task.status === 'error') {
+              <span class="text-red-500">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                  <path
+                    fill="currentColor"
+                    d="m12 13.4l-2.917 2.925q-.277.275-.704.275t-.704-.275q-.275-.275-.275-.7t.275-.7L10.6 12L7.675 9.108Q7.4 8.831 7.4 8.404t.275-.704q.275-.275.7-.275t.7.275L12 10.625L14.892 7.7q.277-.275.704-.275t.704.275q.3.3.3.713t-.3.687L13.375 12l2.925 2.917q.275.277.275.704t-.275.704q-.3.3-.712.3t-.688-.3z"
+                  />
+                </svg>
+              </span>
+            } @else if (task.status === 'uploading') {
+              <span class="animate-bounce text-yellow-400 text-xs">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                  <path
+                    fill="currentColor"
+                    d="m11 8.8l-2.9 2.9q-.275.275-.7.275t-.7-.275t-.275-.7t.275-.7l4.6-4.6q.3-.3.7-.3t.7.3l4.6 4.6q.275.275.275.7t-.275.7t-.7.275t-.7-.275L13 8.8V17q0 .425-.288.713T12 18t-.712-.288T11 17z"
+                  />
+                </svg>
+              </span>
+            }
+
+            <span
+              class="text-sm text-slate-200 truncate font-medium pr-1 block w-full"
+              appEditableTitle
+              [editableEnabled]="!uploadManager.isProcessing() && task.status === 'pending'"
+              (titleChanged)="uploadManager.updateTaskTitle(task.id, $event)"
+            >
+              {{ task.title }}
+            </span>
+          </div>
+
+          @if (!uploadManager.isProcessing() && task.status === 'pending') {
+            <button
+              (click)="uploadManager.removeFromQueue(task.id)"
+              class="opacity-0 group-hover/item:opacity-100 text-slate-500 hover:text-red-400 transition-all text-xs cursor-pointer shrink-0"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                <path
+                  fill="currentColor"
+                  d="m9.4 16.5l2.6-2.6l2.6 2.6l1.4-1.4l-2.6-2.6L16 9.9l-1.4-1.4l-2.6 2.6l-2.6-2.6L8 9.9l2.6 2.6L8 15.1zM7 21q-.825 0-1.412-.587T5 19V6H4V4h5V3h6v1h5v2h-1v13q0 .825-.587 1.413T17 21z"
+                />
+              </svg>
+            </button>
+          }
+        </div>
+
+        <div class="w-full bg-slate-950 h-1.5 rounded-full overflow-hidden">
+          <div
+            class="h-full transition-all duration-500 ease-out"
+            [style.width.%]="task.progress"
+            [class.bg-yellow-500]="task.status === 'uploading'"
+            [class.bg-green-500]="task.status === 'success'"
+            [class.bg-red-500]="task.status === 'error'"
+          ></div>
+        </div>
+
+        @if (task.error) {
+          <p class="text-[10px] text-red-400 italic">{{ task.error }}</p>
+        }
+      </div>
+    } @empty {
+      <div class="text-center py-10 opacity-30">
+        <p class="text-sm italic">La cola está vacía</p>
+      </div>
+    }
+  </div>
+
+  <div class="p-4 bg-slate-950/50 border-t border-slate-800 flex justify-end items-center">
+    <div class="flex gap-3">
+      @if (uploadManager.isProcessing()) {
+        <button
+          (click)="uploadManager.stopUploads()"
+          class="cursor-pointer flex items-center justify-center rounded-lg border border-red-500/30 bg-red-500/10 px-6 py-2 text-sm font-bold text-red-400 transition-all hover:bg-red-500/20 w-44 h-10"
+        >
+          <span class="flex items-center gap-2"> Parar Subida </span>
+        </button>
+      } @else if (uploadManager.isFinished()) {
+        <button
+          disabled
+          class="bg-green-500/10 border border-green-500/30 text-green-400 px-6 py-2 rounded-lg font-bold flex items-center justify-center gap-2 text-sm w-44 h-10 opacity-80"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="3"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          Completado
+        </button>
+      } @else {
+        <button
+          (click)="uploadManager.startUploads()"
+          [disabled]="uploadManager.queue().length === 0"
+          class="bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-600 text-white px-6 py-2 rounded-lg font-bold transition-all flex items-center justify-center gap-2 text-sm shadow-lg shadow-indigo-500/20 cursor-pointer w-44 h-10"
+        >
+          @if (uploadManager.isStartUpload()) {
+            <span>Continuar</span>
+          } @else {
+            <span>Subir Archivos</span>
+          }
+        </button>
+      }
+    </div>
+  </div>
+</div>

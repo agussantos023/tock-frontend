@@ -3,9 +3,9 @@ import { inject, Injectable, signal } from '@angular/core';
 import { CookieService } from 'ngx-cookie-service';
 import { environment } from '../../environments/environment';
 import { tap } from 'rxjs/operators';
-import { AuthResponse, LoginRequest, RegisterRequest } from '../interface/auth.interface';
-import { AuthStatus } from '../interface/auth-status.type';
-import { OtpResponse } from '../interface/otp-response.interface';
+import { AuthResponse, LoginRequest, RegisterRequest } from '../shared/interface/auth.interface';
+import { AuthStatus } from '../shared/interface/auth-status.type';
+import { OtpResponse } from '../shared/interface/otp-response.interface';
 
 @Injectable({
   providedIn: 'root',

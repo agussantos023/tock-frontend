@@ -1,6 +1,6 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { SongManager } from './song-manager';
-import { Song } from '../interface/song.interface';
+import { Song } from '../shared/interface/song.interface';
 
 @Injectable({
   providedIn: 'root',

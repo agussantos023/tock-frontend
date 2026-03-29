@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { firstValueFrom } from 'rxjs';
-import { PaginatedSongs, Song } from '../interface/song.interface';
+import { PaginatedSongs, Song } from '../shared/interface/song.interface';
 
 @Injectable({
   providedIn: 'root',

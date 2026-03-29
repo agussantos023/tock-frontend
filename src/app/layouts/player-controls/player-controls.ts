@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { PlaybackManager } from '../../services/playback-manager';
 import { SongManager } from '../../services/song-manager';
-import { DurationPipe } from '../../pipes/duration-pipe';
+import { DurationPipe } from '../../shared/pipes/duration-pipe';
 import { VolumeVisualizer } from './volume-visualizer/volume-visualizer';
 
 @Component({
