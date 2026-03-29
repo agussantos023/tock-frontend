@@ -21,7 +21,13 @@ export class UploadManager {
   isProcessing = signal<boolean>(false);
 
   totalFiles = computed(() => this.queue().length);
-  completedCount = computed(() => this.queue().filter((task) => task.status === 'success').length);
+
+  // ESTADÍSTICAS DERIVADAS
+  successCount = computed(() => this.queue().filter((t) => t.status === 'success').length);
+  errorCount = computed(() => this.queue().filter((t) => t.status === 'error').length);
+  pendingCount = computed(() => this.queue().filter((t) => t.status === 'pending').length);
+
+  hasCompleted = computed(() => this.successCount() > 0);
 
   isStartUpload = signal<boolean>(false);
 
@@ -91,7 +97,7 @@ export class UploadManager {
       .pipe(takeUntil(this.stopSignal$))
       .subscribe({
         next: () => {
-          const completed = this.completedCount();
+          const completed = this.successCount();
           this.checkAndRefresh(completed);
           // Cuando termine (incluyendo el delay), buscamos la siguiente
           this.processNextTask();
@@ -212,5 +218,15 @@ export class UploadManager {
     if (this.isProcessing()) return;
     this.queue.set([]);
     this.isStartUpload.set(false);
+  }
+
+  clearByStatus(status: UploadStatus) {
+    // Bloqueo de seguridad: No limpiar si estamos procesando
+    if (this.isProcessing()) return;
+
+    this.queue.update((tasks) => tasks.filter((t) => t.status !== status));
+
+    // Si la cola se vacía por completo, reseteamos la sesión
+    if (this.queue().length === 0) this.isStartUpload.set(false);
   }
 }

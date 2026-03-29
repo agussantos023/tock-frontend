@@ -1,35 +1,132 @@
 <div
   class="absolute right-0 top-14 w-112.5 bg-slate-900 border border-slate-700 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col max-h-[80vh] overflow-hidden z-30"
 >
-  <header
-    class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/80 backdrop-blur-md"
-  >
-    <div class="flex flex-col">
-      <h3 class="text-white font-bold flex items-center gap-2">
-        <span class="text-indigo-400 text-lg">🚀</span>
-        Estación de Subida
-      </h3>
-      <span class="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
-        Gestión de cola de archivos
+  <header class="p-4 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md">
+    <div class="flex justify-between items-start mb-3">
+      <div class="flex flex-col">
+        <h3 class="text-white font-bold flex items-center gap-2 text-sm">
+          <span class="text-indigo-400 text-base">🚀</span>
+          Estación de Subida
+        </h3>
+        <span class="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
+          Gestión de cola de archivos
+        </span>
+      </div>
+
+      <span
+        class="text-xs font-bold px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-500 w-24 flex justify-between"
+      >
+        <span>CUPO</span><span>{{ uploadManager.totalFiles() }}/50</span>
       </span>
     </div>
 
-    <div class="flex items-center gap-2">
-      <div
-        class="flex items-center justify-between w-28 bg-slate-800/50 border border-slate-700 px-2.5 py-1 rounded-full"
-      >
-        <span class="text-[11px] font-medium text-slate-400 mr-1.5">CUPO</span>
-        <span
-          class="text-xs font-bold"
-          [class.text-green-400]="uploadManager.totalFiles() < 40"
-          [class.text-yellow-500]="
-            uploadManager.totalFiles() >= 40 && uploadManager.totalFiles() < 50
-          "
-          [class.text-red-500]="uploadManager.totalFiles() >= 50"
+    <div class="flex gap-2">
+      @if (uploadManager.pendingCount()) {
+        <button
+          animate.enter="stats-enter"
+          animate.leave="stats-leave"
+          (click)="uploadManager.clearByStatus('pending')"
+          [disabled]="uploadManager.isProcessing() || uploadManager.pendingCount() === 0"
+          class="group relative flex-1 bg-slate-800/40 border border-slate-700/50 cursor-pointer rounded-lg py-1.5 px-2 flex flex-col items-center transition-all hover:border-indigo-500/50 hover:bg-indigo-500/5 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
         >
-          {{ uploadManager.totalFiles() }} / 50
-        </span>
-      </div>
+          <div class="flex flex-col items-center transition-all group-hover:-translate-y-8">
+            <span class="text-[9px] text-slate-500 font-bold uppercase">Pendientes</span>
+            <span class="text-xs font-bold text-indigo-400">{{
+              uploadManager.pendingCount()
+            }}</span>
+          </div>
+          <div
+            class="absolute inset-0 flex flex-col items-center justify-center translate-y-8 group-hover:translate-y-0 transition-all text-indigo-400"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"
+              />
+            </svg>
+            <span class="text-[8px] font-bold uppercase mt-1">Limpiar</span>
+          </div>
+        </button>
+      }
+
+      @if (uploadManager.successCount()) {
+        <button
+          animate.enter="stats-enter"
+          animate.leave="stats-leave"
+          (click)="uploadManager.clearByStatus('success')"
+          [disabled]="uploadManager.isProcessing() || uploadManager.successCount() === 0"
+          class="group relative flex-1 bg-green-500/5 border cursor-pointer border-green-500/20 rounded-lg py-1.5 px-2 flex flex-col items-center transition-all hover:border-green-500/50 hover:bg-green-500/10 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
+        >
+          <div class="flex flex-col items-center transition-all group-hover:-translate-y-8">
+            <span class="text-[9px] text-green-500/60 font-bold uppercase">Éxito</span>
+            <span class="text-xs font-bold text-green-400">{{ uploadManager.successCount() }}</span>
+          </div>
+          <div
+            class="absolute inset-0 flex flex-col items-center justify-center translate-y-8 group-hover:translate-y-0 transition-all text-green-400"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"
+              />
+            </svg>
+            <span class="text-[8px] font-bold uppercase mt-1">Limpiar</span>
+          </div>
+        </button>
+      }
+
+      @if (uploadManager.errorCount()) {
+        <button
+          animate.enter="stats-enter"
+          animate.leave="stats-leave"
+          (click)="uploadManager.clearByStatus('error')"
+          [disabled]="uploadManager.isProcessing() || uploadManager.errorCount() === 0"
+          class="group relative flex-1 bg-red-500/5 border cursor-pointer border-red-500/20 rounded-lg py-1.5 px-2 flex flex-col items-center transition-all hover:border-red-500/50 hover:bg-red-500/10 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
+        >
+          <div class="flex flex-col items-center transition-all group-hover:-translate-y-8">
+            <span class="text-[9px] text-red-500/60 font-bold uppercase">Error</span>
+            <span class="text-xs font-bold text-red-400">{{ uploadManager.errorCount() }}</span>
+          </div>
+          <div
+            class="absolute inset-0 flex flex-col items-center justify-center translate-y-8 group-hover:translate-y-0 transition-all text-red-400"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"
+              />
+            </svg>
+            <span class="text-[8px] font-bold uppercase mt-1">Limpiar</span>
+          </div>
+        </button>
+      }
     </div>
   </header>
 
@@ -128,33 +225,25 @@
     }
   </div>
 
-  <div class="p-4 bg-slate-950/50 border-t border-slate-800 flex justify-between items-center">
-    <button
-      (click)="uploadManager.clearQueue()"
-      [disabled]="uploadManager.isProcessing() || uploadManager.queue().length === 0"
-      class="text-xs text-slate-500 hover:text-white transition-colors disabled:opacity-50 disabled:hover:text-slate-500 cursor-pointer"
-    >
-      Limpiar todo
-    </button>
-
+  <div class="p-4 bg-slate-950/50 border-t border-slate-800 flex justify-end items-center">
     <div class="flex gap-3">
       @if (uploadManager.isProcessing()) {
         <button
           (click)="uploadManager.stopUploads()"
-          class="cursor-pointer rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-bold text-red-400 transition-all hover:bg-red-500/20"
+          class="cursor-pointer flex items-center justify-center rounded-lg border border-red-500/30 bg-red-500/10 px-6 py-2 text-sm font-bold text-red-400 transition-all hover:bg-red-500/20 w-40 h-10"
         >
-          Parar
+          <span class="flex items-center gap-2"> Parar </span>
         </button>
       } @else {
         <button
           (click)="uploadManager.startUploads()"
           [disabled]="uploadManager.queue().length === 0"
-          class="bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-600 text-white px-6 py-2 rounded-lg font-bold transition-all flex items-center gap-2 text-sm shadow-lg shadow-indigo-500/20 cursor-pointer"
+          class="bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-600 text-white px-6 py-2 rounded-lg font-bold transition-all flex items-center justify-center gap-2 text-sm shadow-lg shadow-indigo-500/20 cursor-pointer w-40 h-10"
         >
           @if (uploadManager.isStartUpload()) {
-            Continuar
+            <span>Continuar</span>
           } @else {
-            Empezar Subida
+            <span>Empezar Subida</span>
           }
         </button>
       }
