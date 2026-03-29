@@ -19,6 +19,7 @@ export class UploadManager {
 
   queue = signal<UploadTask[]>([]);
   isProcessing = signal<boolean>(false);
+  isStorageFull = signal<boolean>(false); //
 
   totalFiles = computed(() => this.queue().length);
 
@@ -182,9 +183,15 @@ export class UploadManager {
 
   private handleError(id: string, error: HttpErrorResponse) {
     let msg = 'Error desconocido';
-    if (error.status === 507) msg = '⚠️ Espacio insuficiente en servidor.';
 
+    if (error.status === 507) {
+      msg = 'Límite de almacenamiento';
+      this.isStorageFull.set(true); // Bloqueamos el Dropzone
+      this.stopSignal$.next(); // Paramos la cola inmediatamente
+      this.isProcessing.set(false);
+    }
     this.updateTaskStatus(id, 'error', 0);
+
     this.queue.update((tasks) => tasks.map((t) => (t.id === id ? { ...t, error: msg } : t)));
   }
 

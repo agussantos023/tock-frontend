@@ -136,79 +136,114 @@
       }
     </div>
   </header>
+  @if (!uploadManager.isStorageFull()) {
+    <div
+      (click)="!uploadManager.isQueueFull() && fileInput.click()"
+      (dragover)="!uploadManager.isQueueFull() && onDragOver($event)"
+      (dragleave)="onDragLeave()"
+      (drop)="!uploadManager.isQueueFull() && handleDrop($event)"
+      [class.border-indigo-500]="isDragging() && !uploadManager.isQueueFull()"
+      [class.bg-indigo-500/10]="isDragging() && !uploadManager.isQueueFull()"
+      [class.opacity-40]="uploadManager.isQueueFull()"
+      [class.cursor-not-allowed]="uploadManager.isQueueFull()"
+      [class.grayscale]="uploadManager.isQueueFull()"
+      [class.cursor-pointer]="!uploadManager.isQueueFull()"
+      [class.cursor-not-allowed]="uploadManager.isQueueFull()"
+      class="m-4 border-2 border-slate-700 border-dashed rounded-xl px-8 py-6 text-center transition-all group relative"
+    >
+      <input
+        #fileInput
+        type="file"
+        multiple
+        accept="audio/mpeg"
+        (change)="onFilesSelected($event)"
+        class="hidden"
+        [disabled]="uploadManager.isQueueFull()"
+      />
 
-  <div
-    (click)="!uploadManager.isQueueFull() && fileInput.click()"
-    (dragover)="!uploadManager.isQueueFull() && onDragOver($event)"
-    (dragleave)="onDragLeave()"
-    (drop)="!uploadManager.isQueueFull() && handleDrop($event)"
-    [class.border-indigo-500]="isDragging() && !uploadManager.isQueueFull()"
-    [class.bg-indigo-500/10]="isDragging() && !uploadManager.isQueueFull()"
-    [class.opacity-40]="uploadManager.isQueueFull()"
-    [class.cursor-not-allowed]="uploadManager.isQueueFull()"
-    [class.grayscale]="uploadManager.isQueueFull()"
-    [class.cursor-pointer]="!uploadManager.isQueueFull()"
-    [class.cursor-not-allowed]="uploadManager.isQueueFull()"
-    class="m-4 border-2 border-slate-700 border-dashed rounded-xl px-8 py-6 text-center transition-all group relative"
-  >
-    <input
-      #fileInput
-      type="file"
-      multiple
-      accept="audio/mpeg"
-      (change)="onFilesSelected($event)"
-      class="hidden"
-      [disabled]="uploadManager.isQueueFull()"
-    />
+      <div class="flex flex-col items-center gap-3">
+        <div
+          class="w-12 h-12 rounded-full flex items-center justify-center transition-transform"
+          [class.bg-slate-800]="!uploadManager.isQueueFull()"
+          [class.bg-red-500/10]="uploadManager.isQueueFull()"
+          [class.group-hover:scale-110]="!uploadManager.isQueueFull()"
+        >
+          @if (uploadManager.isQueueFull()) {
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              class="text-red-500"
+            >
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+          } @else {
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              class="text-indigo-400"
+            >
+              <path
+                fill="currentColor"
+                d="M6 20q-.825 0-1.412-.587T4 18v-2q0-.425.288-.712T5 15t.713.288T6 16v2h12v-2q0-.425.288-.712T19 15t.713.288T20 16v2q0 .825-.587 1.413T18 20zm5-12.15L9.125 9.725q-.3.3-.712.288T7.7 9.7q-.275-.3-.288-.7t.288-.7l3.6-3.6q.15-.15.325-.212T12 4.425t.375.063t.325.212l3.6 3.6q.3.3.288.7t-.288.7q-.3.3-.712.313t-.713-.288L13 7.85V15q0 .425-.288.713T12 16t-.712-.288T11 15z"
+              />
+            </svg>
+          }
+        </div>
 
-    <div class="flex flex-col items-center gap-3">
-      <div
-        class="w-12 h-12 rounded-full flex items-center justify-center transition-transform"
-        [class.bg-slate-800]="!uploadManager.isQueueFull()"
-        [class.bg-red-500/10]="uploadManager.isQueueFull()"
-        [class.group-hover:scale-110]="!uploadManager.isQueueFull()"
-      >
-        @if (uploadManager.isQueueFull()) {
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            class="text-red-500"
-          >
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-          </svg>
-        } @else {
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            class="text-indigo-400"
-          >
-            <path
-              fill="currentColor"
-              d="M6 20q-.825 0-1.412-.587T4 18v-2q0-.425.288-.712T5 15t.713.288T6 16v2h12v-2q0-.425.288-.712T19 15t.713.288T20 16v2q0 .825-.587 1.413T18 20zm5-12.15L9.125 9.725q-.3.3-.712.288T7.7 9.7q-.275-.3-.288-.7t.288-.7l3.6-3.6q.15-.15.325-.212T12 4.425t.375.063t.325.212l3.6 3.6q.3.3.288.7t-.288.7q-.3.3-.712.313t-.713-.288L13 7.85V15q0 .425-.288.713T12 16t-.712-.288T11 15z"
-            />
-          </svg>
-        }
-      </div>
-
-      <div>
-        @if (uploadManager.isQueueFull()) {
-          <p class="text-red-400 font-bold text-sm">Cola llena (50/50)</p>
-          <p class="text-slate-500 text-[11px]">Limpia archivos completados para añadir más</p>
-        } @else {
-          <p class="text-slate-200 font-medium">Arrastra tus MP3 aquí</p>
-          <p class="text-slate-500 text-sm">o haz clic para explorar</p>
-        }
+        <div>
+          @if (uploadManager.isQueueFull()) {
+            <p class="text-red-400 font-bold text-sm">Cola llena (50/50)</p>
+            <p class="text-slate-500 text-[11px]">Limpia archivos completados para añadir más</p>
+          } @else {
+            <p class="text-slate-200 font-medium">Arrastra tus MP3 aquí</p>
+            <p class="text-slate-500 text-sm">o haz clic para explorar</p>
+          }
+        </div>
       </div>
     </div>
-  </div>
+  } @else {
+    <div
+      class="m-4 border-2 border-red-500/30 bg-red-500/5 rounded-xl px-8 py-6 text-center flex flex-col items-center justify-center gap-3 min-h-37"
+    >
+      <div
+        class="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center text-red-500 animate-pulse"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path
+            d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+          ></path>
+          <line x1="12" y1="9" x2="12" y2="13"></line>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+      </div>
+      <div>
+        <p class="text-red-400 font-bold text-sm uppercase tracking-tight">
+          Almacenamiento Agotado
+        </p>
+        <p class="text-slate-500 text-[12px] leading-relaxed max-w-64 mx-auto">
+          Has alcanzado tu límite de almacenamiento. Borra contenido.
+        </p>
+      </div>
+    </div>
+  }
 
   <div class="flex-1 overflow-y-auto px-4 space-y-2 mb-4 custom-scrollbar">
     @for (task of uploadManager.queue(); track task.id) {
