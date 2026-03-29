@@ -1,17 +1,16 @@
 import { AfterViewInit, Component, inject, OnInit, signal } from '@angular/core';
 import { SongManager } from '../../services/song-manager';
 import { environment } from '../../../environments/environment.development';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Song } from '../../shared/interface/song.interface';
 import { DurationPipe } from '../../shared/pipes/duration-pipe';
 import { FilesizePipe } from '../../shared/pipes/filesize-pipe';
 import { PlaybackManager } from '../../services/playback-manager';
 import { UploadManager } from '../../services/upload-manager';
-import { EditableTitle } from '../../shared/directives/editable-title';
+import { UploadStation } from './upload-station/upload-station';
 
 @Component({
   selector: 'app-songs-page',
-  imports: [ReactiveFormsModule, DurationPipe, FilesizePipe, EditableTitle],
+  imports: [DurationPipe, FilesizePipe, UploadStation],
   templateUrl: './songs-page.html',
   styleUrl: './songs-page.css',
 })
@@ -25,59 +24,14 @@ export class SongsPage implements OnInit, AfterViewInit {
   backendUrl = environment.apiUrl.replace('/api', '');
 
   // UI State
-  showForm = signal(false);
-  isDragging = signal(false);
-  isUploading = signal(false);
-  errorMessage = signal<string | null>(null);
+  showUploadStation = signal(false);
 
   ngOnInit() {
     this.songManager.loadMore();
   }
 
-  uploadForm = new FormGroup({
-    fileSource: new FormControl<File | null>(null, Validators.required),
-    title: new FormControl('', Validators.required), // Se rellena solo
-  });
-
-  private audio = new Audio();
-  private currentObjectUrl: string | null = null; // Para limpiar memoria
-
   toggleForm() {
-    this.showForm.update((v) => !v);
-    this.errorMessage.set(null);
-    this.uploadForm.reset();
-  }
-
-  onFileChange(event: any) {
-    this.errorMessage.set(null);
-
-    if (event.target.files.length === 0) {
-      this.uploadForm.reset();
-      return;
-    }
-
-    const file = event.target.files[0] as File;
-
-    if (!file) return;
-
-    // 50MB (50 * 1024 * 1024 bytes)
-    const maxSize = 50 * 1024 * 1024;
-
-    if (file.size > maxSize) {
-      this.errorMessage.set(
-        `⚠️ El archivo es demasiado grande (${(file.size / 1024 / 1024).toFixed(2)}MB). Máximo 50MB.`,
-      );
-      this.uploadForm.reset();
-      return;
-    }
-
-    // "Mi Cancion.mp3" -> "Mi Cancion"
-    const title = file.name.replace(/\.[^/.]+$/, '');
-
-    this.uploadForm.patchValue({
-      fileSource: file,
-      title: title,
-    });
+    this.showUploadStation.update((v) => !v);
   }
 
   ngAfterViewInit() {
@@ -99,52 +53,6 @@ export class SongsPage implements OnInit, AfterViewInit {
 
   togglePlay(song: Song) {
     this.playbackManager.playSong(song);
-  }
-
-  formatSize(bytes: string): string {
-    const mb = parseInt(bytes) / (1024 * 1024);
-    return mb.toFixed(2) + ' MB';
-  }
-
-  // --- MÉTODOS DE CAPTURA ---
-
-  onFilesSelected(event: any) {
-    const files = event.target.files;
-    this.handleFiles(files);
-  }
-
-  handleDrop(event: DragEvent) {
-    event.preventDefault();
-    this.isDragging.set(false);
-    const files = event.dataTransfer?.files;
-    this.handleFiles(files);
-  }
-
-  private handleFiles(files: FileList | null | undefined) {
-    if (!files || files.length === 0) return;
-
-    // Filtramos solo archivos MP3
-    const mp3Files = Array.from(files).filter(
-      (file) => file.type === 'audio/mpeg' || file.name.toLowerCase().endsWith('.mp3'),
-    );
-
-    if (mp3Files.length === 0) {
-      alert('Por favor, selecciona solo archivos MP3.');
-      return;
-    }
-
-    this.uploadManager.addFilesToQueue(mp3Files);
-  }
-
-  // --- HELPERS VISUALES ---
-
-  onDragOver(event: DragEvent) {
-    event.preventDefault();
-    this.isDragging.set(true);
-  }
-
-  onDragLeave() {
-    this.isDragging.set(false);
   }
 
   ngOnDestroy() {

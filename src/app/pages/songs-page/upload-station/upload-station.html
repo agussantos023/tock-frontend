@@ -1,0 +1,154 @@
+<div
+  class="absolute right-0 top-14 w-112.5 bg-slate-900 border border-slate-700 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col max-h-[80vh] overflow-hidden z-30"
+>
+  <header
+    class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/80 backdrop-blur-md"
+  >
+    <div class="flex flex-col">
+      <h3 class="text-white font-bold flex items-center gap-2">
+        <span class="text-indigo-400 text-lg">🚀</span>
+        Estación de Subida
+      </h3>
+      <span class="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
+        Gestión de cola de archivos
+      </span>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <div
+        class="flex items-center bg-slate-800/50 border border-slate-700 px-2.5 py-1 rounded-full"
+      >
+        <span class="text-[11px] font-medium text-slate-400 mr-1.5">CUPO</span>
+        <span
+          class="text-xs font-bold"
+          [class.text-green-400]="uploadManager.totalFiles() < 40"
+          [class.text-yellow-500]="
+            uploadManager.totalFiles() >= 40 && uploadManager.totalFiles() < 50
+          "
+          [class.text-red-500]="uploadManager.totalFiles() >= 50"
+        >
+          {{ uploadManager.totalFiles() }} / 50
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <div
+    (click)="fileInput.click()"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave()"
+    (drop)="handleDrop($event)"
+    [class.border-indigo-500]="isDragging()"
+    [class.bg-indigo-500/10]="isDragging()"
+    [class.border-dashed]="isDragging()"
+    class="m-4 border-2 border-slate-700 rounded-xl px-8 py-4 text-center transition-all group relative cursor-pointer"
+  >
+    <input
+      #fileInput
+      type="file"
+      multiple
+      accept="audio/mpeg"
+      (change)="onFilesSelected($event)"
+      class="hidden"
+    />
+
+    <div class="flex flex-col items-center gap-3">
+      <div
+        class="w-12 h-10 rounded-full bg-slate-800 flex items-center justify-center group-hover:scale-110 transition-transform"
+      >
+        <span class="text-2xl">📥</span>
+      </div>
+      <div>
+        <p class="text-slate-200 font-medium">Arrastra tus MP3 aquí</p>
+        <p class="text-slate-500 text-sm">o haz clic para explorar</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex-1 overflow-y-auto px-4 space-y-2 mb-4 custom-scrollbar">
+    @for (task of uploadManager.queue(); track task.id) {
+      <div
+        class="bg-slate-800/40 border border-slate-700/50 rounded-lg p-3 flex flex-col gap-2 group/item"
+      >
+        <div class="flex justify-between items-center w-full gap-4">
+          <div class="flex items-center gap-3 overflow-hidden flex-1 min-w-0">
+            @if (task.status === 'success') {
+              <span class="text-green-500">✅</span>
+            } @else if (task.status === 'error') {
+              <span class="text-red-500">❌</span>
+            } @else if (task.status === 'uploading') {
+              <span class="animate-bounce text-yellow-400 text-xs">⬆️</span>
+            } @else {
+              <span class="text-slate-500 text-xs">⏳</span>
+            }
+
+            <span
+              class="text-sm text-slate-200 truncate font-medium pr-1 block w-full cursor-pointer"
+              appEditableTitle
+              [editableEnabled]="!uploadManager.isProcessing() && task.status === 'pending'"
+              (titleChanged)="uploadManager.updateTaskTitle(task.id, $event)"
+            >
+              {{ task.title }}
+            </span>
+          </div>
+
+          @if (!uploadManager.isProcessing() && task.status === 'pending') {
+            <button
+              (click)="uploadManager.removeFromQueue(task.id)"
+              class="opacity-0 group-hover/item:opacity-100 text-slate-500 hover:text-red-400 transition-all text-xs cursor-pointer shrink-0"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                <path
+                  fill="currentColor"
+                  d="m9.4 16.5l2.6-2.6l2.6 2.6l1.4-1.4l-2.6-2.6L16 9.9l-1.4-1.4l-2.6 2.6l-2.6-2.6L8 9.9l2.6 2.6L8 15.1zM7 21q-.825 0-1.412-.587T5 19V6H4V4h5V3h6v1h5v2h-1v13q0 .825-.587 1.413T17 21z"
+                />
+              </svg>
+            </button>
+          }
+        </div>
+
+        <div class="w-full bg-slate-950 h-1.5 rounded-full overflow-hidden">
+          <div
+            class="h-full transition-all duration-500 ease-out"
+            [style.width.%]="task.progress"
+            [class.bg-yellow-500]="task.status === 'uploading'"
+            [class.bg-green-500]="task.status === 'success'"
+            [class.bg-red-500]="task.status === 'error'"
+          ></div>
+        </div>
+
+        @if (task.error) {
+          <p class="text-[10px] text-red-400 italic">{{ task.error }}</p>
+        }
+      </div>
+    } @empty {
+      <div class="text-center py-10 opacity-30">
+        <p class="text-sm italic">La cola está vacía</p>
+      </div>
+    }
+  </div>
+
+  <div class="p-4 bg-slate-950/50 border-t border-slate-800 flex justify-between items-center">
+    <button
+      (click)="uploadManager.clearQueue()"
+      [disabled]="uploadManager.isProcessing() || uploadManager.queue().length === 0"
+      class="text-xs text-slate-500 hover:text-white transition-colors disabled:opacity-50 disabled:hover:text-slate-500 cursor-pointer"
+    >
+      Limpiar todo
+    </button>
+
+    <div class="flex gap-3">
+      <button
+        (click)="uploadManager.startUploads()"
+        [disabled]="uploadManager.isProcessing() || uploadManager.queue().length === 0"
+        class="bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-600 text-white px-6 py-2 rounded-lg font-bold transition-all flex items-center gap-2 text-sm shadow-lg shadow-indigo-500/20 cursor-pointer"
+      >
+        @if (uploadManager.isProcessing()) {
+          <span class="animate-spin text-xs">⏳</span> Procesando...
+        } @else {
+          Empezar Subida
+        }
+      </button>
+    </div>
+  </div>
+</div>
