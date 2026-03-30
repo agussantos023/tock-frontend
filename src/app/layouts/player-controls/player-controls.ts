@@ -14,7 +14,12 @@ export class PlayerControls {
   protected songManager = inject(SongManager);
   protected playbackManager = inject(PlaybackManager);
 
+  isExpanded = signal<boolean>(true);
   isTimeHovered = signal<boolean>(false);
+
+  toggleExpand(): void {
+    this.isExpanded.update((v) => !v);
+  }
 
   onSeek(event: any) {
     this.playbackManager.seek(event.target.value);
