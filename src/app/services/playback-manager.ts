@@ -22,8 +22,41 @@ export class PlaybackManager {
 
   private setupAudioListeners() {
     this.audio.ontimeupdate = () => this.currentTime.set(this.audio.currentTime);
-    this.audio.onloadedmetadata = () => this.duration.set(this.audio.duration);
+    this.audio.onloadedmetadata = () => {
+      this.duration.set(this.audio.duration);
+      this.updateMediaSession(); // Actualizar metadatos
+    };
     this.audio.onended = () => this.next();
+
+    // Escuchar cambios del elemento audio
+    this.audio.onplay = () => {
+      this.isPlaying.set(true);
+      if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+    };
+    this.audio.onpause = () => {
+      this.isPlaying.set(false);
+      if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+    };
+  }
+
+  private updateMediaSession() {
+    if (!('mediaSession' in navigator)) return;
+
+    const song = this.currentSong();
+    if (!song) return;
+
+    // Mostrar info en el SO
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: song.title,
+      artist: song.artist || 'Artista desconocido',
+      album: 'Tock Music',
+    });
+
+    // Mapear botones
+    navigator.mediaSession.setActionHandler('play', () => this.togglePlay());
+    navigator.mediaSession.setActionHandler('pause', () => this.togglePlay());
+    navigator.mediaSession.setActionHandler('previoustrack', () => this.previous());
+    navigator.mediaSession.setActionHandler('nexttrack', () => this.next());
   }
 
   async playSong(song: Song) {
@@ -90,7 +123,13 @@ export class PlaybackManager {
     this.volume.set(value);
   }
 
+  setMute(mute: boolean) {
+    this.audio.muted = mute;
+  }
+
   seek(time: number) {
     this.audio.currentTime = time;
+
+    this.currentTime.set(time);
   }
 }

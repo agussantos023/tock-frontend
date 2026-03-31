@@ -41,6 +41,7 @@
     } @else {
       @for (song of songManager.songs(); track song.id; let i = $index) {
         <div
+          [id]="'song-' + song.id"
           (click)="togglePlay(song)"
           class="group flex items-center gap-4 p-3 rounded-lg transition-all cursor-pointer border-l-4"
           [class.bg-white/5]="playbackManager.currentSong()?.id !== song.id"

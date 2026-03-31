@@ -21,7 +21,42 @@ export class PlayerControls {
     this.isExpanded.update((v) => !v);
   }
 
+  onSeekStart() {
+    this.playbackManager.setMute(true);
+  }
+
   onSeek(event: any) {
-    this.playbackManager.seek(event.target.value);
+    this.playbackManager.seek(Number(event.target.value));
+  }
+
+  onSeekEnd() {
+    this.playbackManager.setMute(false);
+  }
+
+  scrollToCurrentSong() {
+    const currentSong = this.playbackManager.currentSong();
+    if (!currentSong) return;
+
+    const elementId = `song-${currentSong.id}`;
+    const element = document.getElementById(elementId);
+
+    if (element) {
+      element.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+
+      // pequeño efecto visual
+      element.classList.add('ring-2', 'ring-indigo-500', 'ring-offset-2', 'ring-offset-gray-950');
+
+      setTimeout(() => {
+        element.classList.remove(
+          'ring-2',
+          'ring-indigo-500',
+          'ring-offset-2',
+          'ring-offset-gray-950',
+        );
+      }, 2000);
+    }
   }
 }
