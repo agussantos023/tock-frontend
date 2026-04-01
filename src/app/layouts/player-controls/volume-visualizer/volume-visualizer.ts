@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, HostListener, inject, signal } from '@angular/core';
 import { PlaybackManager } from '../../../services/playback-manager';
 
 @Component({
@@ -10,22 +10,39 @@ import { PlaybackManager } from '../../../services/playback-manager';
 export class VolumeVisualizer {
   protected playbackManager = inject(PlaybackManager);
 
+  private isDragging = signal<boolean>(false);
+
   volumeBars = new Array(25).fill(0).map(() => ({
     randomDelay: Math.random(),
   }));
 
-  onBarClick(event: MouseEvent) {
-    const container = event.currentTarget as HTMLElement;
+  onMouseDown(event: MouseEvent) {
+    this.isDragging.set(true);
+
+    this.updateVolumeFromEvent(event);
+  }
+
+  // Escuchar el movimiento globalmente mientras se arrastra
+  @HostListener('window:mousemove', ['$event'])
+  onMouseMove(event: MouseEvent) {
+    if (this.isDragging()) this.updateVolumeFromEvent(event);
+  }
+
+  // Soltar el clic en cualquier parte de la pantalla
+  @HostListener('window:mouseup')
+  onMouseUp() {
+    this.isDragging.set(false);
+  }
+
+  private updateVolumeFromEvent(event: MouseEvent) {
+    const container = document.querySelector('.volume-container') as HTMLElement;
+    if (!container) return;
+
     const rect = container.getBoundingClientRect();
-    const x = event.clientX - rect.left; // Posición X del clic dentro del div
+    const x = event.clientX - rect.left;
     const width = rect.width;
 
-    // Calculamos el porcentaje (0 a 1)
-    let newVolume = x / width;
-
-    // Limitar entre 0 y 1 por seguridad
-    newVolume = Math.max(0, Math.min(1, newVolume));
-
+    const newVolume = Math.max(0, Math.min(1, x / width));
     this.playbackManager.updateVolume(newVolume);
   }
 }

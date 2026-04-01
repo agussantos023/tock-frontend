@@ -1,27 +1,51 @@
 @if (playbackManager.currentSong() && !isExpanded()) {
-  <button
-    (click)="toggleExpand()"
+  <div
     [animate.enter]="['slide-in']"
     [animate.leave]="['slide-out']"
-    class="fixed bottom-6 left-6 z-50 w-18 h-18 flex items-center justify-center group cursor-pointer transition-transform hover:scale-110 active:scale-95"
+    class="fixed bottom-6 left-6 z-30 flex items-end gap-3"
   >
-    <div class="w-18 h-18 border-4 border-indigo-500 rounded-full absolute z-20"></div>
-
-    <img
-      [class.animate-spin-slow]="playbackManager.isPlaying()"
-      class="w-20 h-20 absolute z-10 object-cover"
-      src="/imgs/disk.webp"
-      alt="disk"
-    />
-
-    <div
-      class="bg-indigo-500 text-white p-1 rounded-full shadow-lg z-20 flex items-center justify-center translate-z-10"
+    <button
+      (click)="playbackManager.togglePlay()"
+      class="relative w-18 h-18 flex items-center justify-center group cursor-pointer transition-transform hover:scale-110 active:scale-95"
     >
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div class="w-18 h-18 border-4 border-indigo-500 rounded-full absolute z-20"></div>
+
+      <img
+        [class.paused-animation]="!playbackManager.isPlaying()"
+        class="animate-spin-slow w-20 h-20 absolute z-10 object-cover"
+        src="/imgs/disk.webp"
+        alt="disk"
+      />
+
+      <div
+        class="bg-indigo-500 text-white p-1 rounded-full shadow-lg z-20 flex items-center justify-center"
+      >
+        @if (playbackManager.isPlaying()) {
+          <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+            <path d="M14 19h4V5h-4v14zm-8 0h4V5H6v14z" />
+          </svg>
+        } @else {
+          <svg class="w-5 h-5 fill-current ml-0.5" viewBox="0 0 24 24">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+        }
+      </div>
+    </button>
+
+    <button
+      (click)="toggleExpand()"
+      class="absolute -left-3 -bottom-3 w-10 h-10 z-40 bg-indigo-500 text-white rounded-full shadow-xl flex items-center justify-center hover:scale-110 active:scale-90 transition-all cursor-pointer group/btn"
+    >
+      <svg
+        class="w-5 h-5 transition-transform duration-300 group-hover/btn:-translate-y-1 group-hover/btn:scale-110"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
       </svg>
-    </div>
-  </button>
+    </button>
+  </div>
 }
 
 @if (playbackManager.currentSong() && isExpanded()) {
@@ -37,7 +61,7 @@
           class="text-gray-400 hover:text-white transition-colors cursor-pointer group"
         >
           <svg
-            class="w-6 h-6 group-hover:translate-y-0.5 transition-transform"
+            class="w-6 h-6 transition-transform duration-300 group-hover:translate-y-1 group-hover:scale-110"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"

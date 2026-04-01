@@ -9,6 +9,12 @@
 
 .animate-spin-slow {
   animation: spin-slow 8s linear infinite;
+  /* Por defecto la animación está ejecutandose */
+  animation-play-state: running;
+}
+
+.paused-animation {
+  animation-play-state: paused;
 }
 
 .player-container {
