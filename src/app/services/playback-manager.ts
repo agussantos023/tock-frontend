@@ -30,6 +30,7 @@ export class PlaybackManager {
       this.duration.set(this.audio.duration);
       this.updateMediaSession(); // Actualizar metadatos
     };
+
     this.audio.onended = () => this.next();
 
     // Escuchar cambios del elemento audio
@@ -88,16 +89,30 @@ export class PlaybackManager {
     }
   }
 
-  next() {
+  async next() {
     const list = this.songManager.songs();
-    const index = list.findIndex((s) => s.id === this.currentSong()?.id);
-    const nextIndex = (index + 1) % list.length;
-    this.playSong(list[nextIndex]);
+    const currentIndex = list.findIndex((s) => s.id === this.currentSong()?.id);
+
+    if (currentIndex >= list.length - 3 && !this.songManager.isAllSongsLoaded()) {
+      await this.songManager.loadMore();
+    }
+
+    // Recalculamos la lista y el índice
+    const updatedList = this.songManager.songs();
+    let nextIndex = currentIndex + 1;
+
+    // si hemos llegado al final absoluto
+    if (nextIndex >= updatedList.length) {
+      nextIndex = 0; // Volver al principio
+    }
+
+    this.playSong(updatedList[nextIndex]);
   }
 
   previous() {
     const list = this.songManager.songs();
     const index = list.findIndex((s) => s.id === this.currentSong()?.id);
+
     const prevIndex = (index - 1 + list.length) % list.length;
     this.playSong(list[prevIndex]);
   }
