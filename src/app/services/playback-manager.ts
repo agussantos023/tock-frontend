@@ -2,6 +2,8 @@ import { inject, Injectable, signal } from '@angular/core';
 import { SongManager } from './song-manager';
 import { Song } from '../shared/interface/song.interface';
 
+const VOLUME_KEY = 'tock_player_volume';
+
 @Injectable({
   providedIn: 'root',
 })
@@ -14,9 +16,11 @@ export class PlaybackManager {
   isPlaying = signal<boolean>(false);
   currentTime = signal<number>(0);
   duration = signal<number>(0);
-  volume = signal<number>(0.5);
+  volume = signal<number>(this.getStoredVolume());
 
   constructor() {
+    this.audio.volume = this.volume();
+
     this.setupAudioListeners();
   }
 
@@ -119,8 +123,12 @@ export class PlaybackManager {
   }
 
   updateVolume(value: number) {
-    this.audio.volume = value;
-    this.volume.set(value);
+    const safeVolume = Math.max(0, Math.min(1, value));
+
+    this.audio.volume = safeVolume;
+    this.volume.set(safeVolume);
+
+    localStorage.setItem(VOLUME_KEY, safeVolume.toString());
   }
 
   setMute(mute: boolean) {
@@ -131,5 +139,10 @@ export class PlaybackManager {
     this.audio.currentTime = time;
 
     this.currentTime.set(time);
+  }
+
+  private getStoredVolume(): number {
+    const saved = localStorage.getItem(VOLUME_KEY);
+    return saved ? parseFloat(saved) : 0.5;
   }
 }
