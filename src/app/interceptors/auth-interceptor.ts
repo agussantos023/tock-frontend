@@ -1,18 +1,9 @@
 import { HttpInterceptorFn } from '@angular/common/http';
-import { inject } from '@angular/core';
-import { CookieService } from 'ngx-cookie-service';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  const cookieService = inject(CookieService);
+  const authReq = req.clone({
+    withCredentials: true,
+  });
 
-  const token = cookieService.get('token');
-
-  if (token) {
-    const authReq = req.clone({
-      headers: req.headers.set('Authorization', `Bearer ${token}`),
-    });
-    return next(authReq);
-  }
-
-  return next(req);
+  return next(authReq);
 };
