@@ -42,6 +42,8 @@ export class SongsPage implements OnInit, AfterViewInit {
   showDeleteModal = signal(false);
   canDelete = signal(false);
 
+  showBulkDeleteModal = signal(false);
+
   isSelectionMode = signal(false);
   selectedIds = signal<Set<number>>(new Set());
 
@@ -69,7 +71,11 @@ export class SongsPage implements OnInit, AfterViewInit {
     this.songManager.loadMore();
   }
 
-  toggleForm() {
+  toggleUploadStation() {
+    if (this.isSelectionMode()) {
+      this.isSelectionMode.set(false);
+      this.selectedIds.set(new Set());
+    }
     this.showUploadStation.update((v) => !v);
   }
 
@@ -141,13 +147,12 @@ export class SongsPage implements OnInit, AfterViewInit {
   }
 
   toggleSelectionMode() {
+    if (this.showUploadStation()) this.showUploadStation.set(false);
+
     this.isSelectionMode.update((v) => !v);
 
     if (!this.isSelectionMode()) {
-      this.selectedIds.update((set) => {
-        set.clear();
-        return new Set(set);
-      });
+      this.selectedIds.set(new Set());
     }
   }
 
@@ -171,26 +176,41 @@ export class SongsPage implements OnInit, AfterViewInit {
   }
 
   async onBulkDelete() {
-    const totalSelected = this.selectionCount();
-    if (totalSelected === 0) return;
+    const count = this.selectionCount();
 
-    // Si quieres una confirmación rápida antes de borrar
-    const message = this.isAllSelected()
-      ? '¿Estás seguro de que quieres eliminar TODAS las canciones?'
-      : `¿Eliminar ${totalSelected} canciones?`;
+    if (count === 0) return;
 
-    if (!confirm(message)) return;
+    // Si es solo una, borramos del tirón. Si son varias, pedimos confirmación.
+    if (count === 1) {
+      await this.executeDeletion();
+    } else {
+      this.showBulkDeleteModal.set(true);
+    }
+  }
 
+  async executeDeletion() {
     try {
-      const idsToDelete = this.isAllSelected() ? 'all' : Array.from(this.selectedIds());
+      const selectedIdsArray = Array.from(this.selectedIds());
+      const idsToDelete = this.isAllSelected() ? 'all' : selectedIdsArray;
+
+      const current = this.playbackManager.currentSong();
+      if (current) {
+        const isCurrentDeleted = this.isAllSelected() || selectedIdsArray.includes(current.id);
+        if (isCurrentDeleted) this.playbackManager.eject();
+      }
 
       await this.songManager.delete(idsToDelete);
 
-      // Limpiamos el estado de selección tras el éxito
+      // Limpieza
+      this.closeBulkDeleteModal();
       this.isSelectionMode.set(false);
       this.selectedIds.set(new Set());
     } catch (err) {
-      console.error('Error al eliminar canciones:', err);
+      console.error('Error al eliminar:', err);
     }
+  }
+
+  closeBulkDeleteModal() {
+    this.showBulkDeleteModal.set(false);
   }
 }

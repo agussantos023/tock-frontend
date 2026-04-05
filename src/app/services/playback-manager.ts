@@ -127,6 +127,22 @@ export class PlaybackManager {
     }
   }
 
+  eject() {
+    this.audio.pause();
+    this.audio.src = '';
+    this.audio.load();
+
+    this.currentSong.set(null);
+    this.isPlaying.set(false);
+    this.currentTime.set(0);
+    this.duration.set(0);
+
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.metadata = null;
+      navigator.mediaSession.playbackState = 'none';
+    }
+  }
+
   reset() {
     this.audio.currentTime = 0;
 

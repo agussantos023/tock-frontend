@@ -8,7 +8,7 @@
     <div class="flex items-center gap-4">
       <div class="relative">
         <button
-          (click)="toggleForm()"
+          (click)="toggleUploadStation()"
           class="w-40 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg font-medium transition-all cursor-pointer"
         >
           {{ showUploadStation() ? 'Cerrar' : '+ Subir Canción' }}
@@ -123,41 +123,50 @@
     } @else {
       @if (isSelectionMode()) {
         <div
-          class="flex items-center justify-between bg-indigo-600/10 border border-indigo-500/30 p-4 rounded-xl mb-6 animate-in fade-in slide-in-from-top-2 duration-300"
+          animate.enter="header-slide-in"
+          animate.leave="header-slide-out"
+          class="grid sticky top-4 z-40 overflow-hidden"
         >
-          <div class="flex items-center gap-4">
-            <label class="flex items-center gap-3 cursor-pointer group">
-              <input
-                type="checkbox"
-                [checked]="isAllSelected()"
-                (change)="selectAll($event)"
-                class="w-5 h-5 rounded border-gray-700 bg-gray-900 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-gray-950 transition-all cursor-pointer"
-              />
-              <span
-                class="text-sm font-medium text-indigo-200 group-hover:text-white transition-colors"
-              >
-                {{ isAllSelected() ? 'Todas seleccionadas' : 'Seleccionar todas' }}
-              </span>
-            </label>
-          </div>
+          <div class="min-h-0">
+            <header
+              class="flex items-center justify-between bg-gray-900/40 backdrop-blur-md border border-indigo-500/20 p-4 rounded-xl shadow-2xl mb-6"
+            >
+              <div class="flex items-center gap-4">
+                <label class="flex items-center gap-3 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    [checked]="isAllSelected()"
+                    (change)="selectAll($event)"
+                    class="w-5 h-5 rounded-full border-2 border-gray-700 bg-gray-900 text-red-600 focus:ring-offset-gray-950 focus:ring-red-500 transition-all cursor-pointer checked:border-red-500 appearance-none checked:bg-red-600 relative checked:after:content-['✓'] checked:after:absolute checked:after:inset-0 checked:after:flex checked:after:items-center checked:after:justify-center checked:after:text-white checked:after:text-[10px] checked:after:font-bold"
+                  />
+                  <span
+                    class="text-sm font-semibold text-gray-300 group-hover:text-white transition-colors"
+                  >
+                    {{ isAllSelected() ? 'Todas seleccionadas' : 'Seleccionar todas' }}
+                  </span>
+                </label>
+              </div>
 
-          <div class="flex items-center gap-3">
-            <button
-              (click)="toggleSelectionMode()"
-              class="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors font-medium cursor-pointer"
-            >
-              Cancelar
-            </button>
-            <button
-              [disabled]="selectionCount() === 0"
-              (click)="onBulkDelete()"
-              class="px-5 py-2 bg-red-600 hover:bg-red-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-bold rounded-lg transition-all shadow-lg shadow-red-900/20 cursor-pointer"
-            >
-              {{ deleteButtonText() }}
-            </button>
+              <div class="flex items-center gap-2">
+                <button
+                  (click)="toggleSelectionMode()"
+                  class="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors font-medium cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  [disabled]="selectionCount() === 0"
+                  (click)="onBulkDelete()"
+                  class="px-5 py-2 w-64 bg-red-600 hover:bg-red-500 disabled:bg-red-900/20 disabled:text-red-500/50 border border-red-500/20 text-white text-sm font-bold rounded-lg transition-all cursor-pointer"
+                >
+                  {{ deleteButtonText() }}
+                </button>
+              </div>
+            </header>
           </div>
         </div>
       }
+
       @for (song of songManager.songs(); track song.id; let i = $index) {
         <div
           [id]="'song-' + song.id"
@@ -171,19 +180,58 @@
         >
           <div class="w-8 flex justify-center items-center text-sm font-medium text-gray-500">
             @if (playbackManager.currentSong()?.id === song.id && playbackManager.isPlaying()) {
-              <div class="flex gap-0.5 items-end h-4">
+              <div class="flex gap-0.5 items-end h-4 group-hover:hidden">
                 <div class="w-1 bg-indigo-500 animate-bounce h-2"></div>
                 <div class="w-1 bg-indigo-500 animate-[bounce_1.2s_infinite] h-4"></div>
                 <div class="w-1 bg-indigo-500 animate-[bounce_0.8s_infinite] h-3"></div>
               </div>
             } @else {
               <span class="group-hover:hidden">{{ i + 1 }}</span>
+            }
+
+            @if (isSelectionMode()) {
               <svg
-                class="hidden group-hover:block w-4 h-4 fill-current text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                class="hidden group-hover:block w-5 h-5 text-red-500 animate-in fade-in zoom-in duration-200"
                 viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
               >
-                <path d="M8 5v14l11-7z" />
+                <path
+                  d="M3 6h18m-2 0v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+                />
               </svg>
+            } @else {
+              @if (playbackManager.isPlaying() && playbackManager.currentSong()?.id === song.id) {
+                <svg
+                  class="hidden group-hover:block w-4 h-4 fill-current text-white animate-in fade-in scale-in duration-200"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    fill="currentColor"
+                    d="M16 19q-.825 0-1.412-.587T14 17V7q0-.825.588-1.412T16 5t1.413.588T18 7v10q0 .825-.587 1.413T16 19m-8 0q-.825 0-1.412-.587T6 17V7q0-.825.588-1.412T8 5t1.413.588T10 7v10q0 .825-.587 1.413T8 19"
+                  />
+                </svg>
+              } @else {
+                <svg
+                  class="hidden group-hover:block w-4 h-4 fill-current text-white animate-in fade-in scale-in duration-200"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    fill="currentColor"
+                    d="M8 17.175V6.825q0-.425.3-.713t.7-.287q.125 0 .263.037t.262.113l8.15 5.175q.225.15.338.375t.112.475t-.112.475t-.338.375l-8.15 5.175q-.125.075-.262.113T9 18.175q-.4 0-.7-.288t-.3-.712"
+                  />
+                </svg>
+              }
             }
           </div>
 
@@ -211,7 +259,7 @@
                   [checked]="selectedIds().has(song.id)"
                   (change)="toggleSongSelection(song.id)"
                   (click)="$event.stopPropagation()"
-                  class="w-5 h-5 rounded border-gray-700 bg-gray-900 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-gray-950 transition-all cursor-pointer"
+                  class="w-5 h-5 rounded-full border-2 border-gray-700 bg-gray-900 text-red-600 focus:ring-offset-gray-950 focus:ring-red-500 transition-all cursor-pointer checked:border-red-500 appearance-none checked:bg-red-600 relative checked:after:content-['✓'] checked:after:absolute checked:after:inset-0 checked:after:flex checked:after:items-center checked:after:justify-center checked:after:text-white checked:after:text-[10px] checked:after:font-bold"
                 />
               } @else {
                 <button
@@ -287,6 +335,54 @@
             class="flex-1 px-4 py-2 bg-red-600 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-red-500 text-white rounded-lg transition-colors font-medium cursor-pointer"
           >
             Eliminar todo
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+@if (showBulkDeleteModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+    <div
+      class="bg-gray-900 border border-gray-800 p-6 rounded-2xl max-w-sm w-full shadow-2xl animate-in zoom-in duration-200"
+    >
+      <div class="flex flex-col items-center text-center">
+        <div class="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-4">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-8 h-8 text-red-500"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+            />
+          </svg>
+        </div>
+
+        <h2 class="text-xl font-bold text-white mb-2">¿Borrar {{ selectionCount() }} canciones?</h2>
+        <p class="text-gray-400 text-sm mb-6 leading-relaxed">
+          Vas a eliminar permanentemente estas canciones de tu biblioteca. Esta acción no se puede
+          deshacer.
+        </p>
+
+        <div class="flex gap-3 w-full">
+          <button
+            (click)="closeBulkDeleteModal()"
+            class="flex-1 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg transition-colors font-medium cursor-pointer"
+          >
+            No, volver
+          </button>
+          <button
+            (click)="executeDeletion()"
+            class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors font-medium cursor-pointer shadow-lg shadow-red-600/20"
+          >
+            Sí, eliminar
           </button>
         </div>
       </div>
