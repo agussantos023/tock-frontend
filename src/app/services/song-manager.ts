@@ -76,9 +76,18 @@ export class SongManager {
     }
   }
 
-  async delete(songId: number) {
-    await firstValueFrom(this.http.delete(`${this.apiUrl}/${songId}`));
-    this.songs.update((list) => list.filter((s) => s.id !== songId));
+  async delete(target: number[] | 'all') {
+    const payload = {
+      ids: target === 'all' ? 'all' : target,
+    };
+
+    await firstValueFrom(this.http.delete(`${this.apiUrl}`, { body: payload }));
+
+    // Actualizamos el estado local de forma reactiva
+    this.songs.update((list) => {
+      if (target === 'all') return [];
+      return list.filter((s) => !target.includes(s.id));
+    });
   }
 
   getAudioBlob(songId: number) {

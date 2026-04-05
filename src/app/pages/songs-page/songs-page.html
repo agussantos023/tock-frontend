@@ -121,10 +121,47 @@
         <p class="text-gray-400 text-lg">No tienes canciones subidas aún.</p>
       </div>
     } @else {
+      @if (isSelectionMode()) {
+        <div
+          class="flex items-center justify-between bg-indigo-600/10 border border-indigo-500/30 p-4 rounded-xl mb-6 animate-in fade-in slide-in-from-top-2 duration-300"
+        >
+          <div class="flex items-center gap-4">
+            <label class="flex items-center gap-3 cursor-pointer group">
+              <input
+                type="checkbox"
+                [checked]="isAllSelected()"
+                (change)="selectAll($event)"
+                class="w-5 h-5 rounded border-gray-700 bg-gray-900 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-gray-950 transition-all cursor-pointer"
+              />
+              <span
+                class="text-sm font-medium text-indigo-200 group-hover:text-white transition-colors"
+              >
+                {{ isAllSelected() ? 'Todas seleccionadas' : 'Seleccionar todas' }}
+              </span>
+            </label>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <button
+              (click)="toggleSelectionMode()"
+              class="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors font-medium cursor-pointer"
+            >
+              Cancelar
+            </button>
+            <button
+              [disabled]="selectionCount() === 0"
+              (click)="onBulkDelete()"
+              class="px-5 py-2 bg-red-600 hover:bg-red-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-bold rounded-lg transition-all shadow-lg shadow-red-900/20 cursor-pointer"
+            >
+              {{ deleteButtonText() }}
+            </button>
+          </div>
+        </div>
+      }
       @for (song of songManager.songs(); track song.id; let i = $index) {
         <div
           [id]="'song-' + song.id"
-          (click)="togglePlay(song)"
+          (click)="isSelectionMode() ? toggleSongSelection(song.id) : togglePlay(song)"
           class="group flex items-center gap-4 p-3 rounded-lg transition-all cursor-pointer border-l-4"
           [class.bg-white/5]="playbackManager.currentSong()?.id !== song.id"
           [class.bg-indigo-500/10]="playbackManager.currentSong()?.id === song.id"
@@ -167,23 +204,37 @@
           </div>
 
           <div class="flex items-center gap-3">
-            <button
-              (click)="$event.stopPropagation(); songManager.delete(song.id)"
-              class="p-2 text-gray-500 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="w-5 h-5"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path
-                  d="M3 6h18m-2 0v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+            <div class="flex items-center gap-3">
+              @if (isSelectionMode()) {
+                <input
+                  type="checkbox"
+                  [checked]="selectedIds().has(song.id)"
+                  (change)="toggleSongSelection(song.id)"
+                  (click)="$event.stopPropagation()"
+                  class="w-5 h-5 rounded border-gray-700 bg-gray-900 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-gray-950 transition-all cursor-pointer"
                 />
-              </svg>
-            </button>
+              } @else {
+                <button
+                  (click)="
+                    $event.stopPropagation(); toggleSelectionMode(); toggleSongSelection(song.id)
+                  "
+                  class="p-2 text-gray-500 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="w-5 h-5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path
+                      d="M3 6h18m-2 0v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+                    />
+                  </svg>
+                </button>
+              }
+            </div>
           </div>
         </div>
       }

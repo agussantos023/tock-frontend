@@ -1,6 +1,7 @@
 import {
   AfterViewInit,
   Component,
+  computed,
   ElementRef,
   HostListener,
   inject,
@@ -40,6 +41,20 @@ export class SongsPage implements OnInit, AfterViewInit {
   showProfileMenu = signal(false);
   showDeleteModal = signal(false);
   canDelete = signal(false);
+
+  isSelectionMode = signal(false);
+  selectedIds = signal<Set<number>>(new Set());
+
+  selectionCount = computed(() => this.selectedIds().size);
+  isAllSelected = computed(() => {
+    const songs = this.songManager.songs();
+    return songs.length > 0 && this.selectedIds().size === songs.length;
+  });
+
+  deleteButtonText = computed(() => {
+    if (this.isAllSelected()) return 'Eliminar todas las canciones';
+    return `Eliminar ${this.selectionCount()} ${this.selectionCount() === 1 ? 'canción' : 'canciones'}`;
+  });
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
@@ -123,5 +138,59 @@ export class SongsPage implements OnInit, AfterViewInit {
         alert(msg);
       },
     });
+  }
+
+  toggleSelectionMode() {
+    this.isSelectionMode.update((v) => !v);
+
+    if (!this.isSelectionMode()) {
+      this.selectedIds.update((set) => {
+        set.clear();
+        return new Set(set);
+      });
+    }
+  }
+
+  toggleSongSelection(songId: number) {
+    this.selectedIds.update((set) => {
+      const newSet = new Set(set);
+      if (newSet.has(songId)) newSet.delete(songId);
+      else newSet.add(songId);
+      return newSet;
+    });
+  }
+
+  selectAll(event: Event) {
+    const checkbox = event.target as HTMLInputElement;
+    if (checkbox.checked) {
+      const allIds = this.songManager.songs().map((s) => s.id);
+      this.selectedIds.set(new Set(allIds));
+    } else {
+      this.selectedIds.set(new Set());
+    }
+  }
+
+  async onBulkDelete() {
+    const totalSelected = this.selectionCount();
+    if (totalSelected === 0) return;
+
+    // Si quieres una confirmación rápida antes de borrar
+    const message = this.isAllSelected()
+      ? '¿Estás seguro de que quieres eliminar TODAS las canciones?'
+      : `¿Eliminar ${totalSelected} canciones?`;
+
+    if (!confirm(message)) return;
+
+    try {
+      const idsToDelete = this.isAllSelected() ? 'all' : Array.from(this.selectedIds());
+
+      await this.songManager.delete(idsToDelete);
+
+      // Limpiamos el estado de selección tras el éxito
+      this.isSelectionMode.set(false);
+      this.selectedIds.set(new Set());
+    } catch (err) {
+      console.error('Error al eliminar canciones:', err);
+    }
   }
 }
