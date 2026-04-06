@@ -135,15 +135,12 @@ export class SongsPage implements OnInit, AfterViewInit {
     this.canDelete.set(isSame);
   }
 
-  onConfirmDelete() {
-    this.authUser.deleteAccount().subscribe({
-      next: () => {
-        console.log('Cuenta borrada con éxito');
-      },
-      error: (msg) => {
-        alert(msg);
-      },
-    });
+  async onConfirmDelete() {
+    try {
+      await this.authUser.deleteAccount();
+    } catch (err) {
+      alert(err);
+    }
   }
 
   toggleSelectionMode() {
@@ -180,7 +177,6 @@ export class SongsPage implements OnInit, AfterViewInit {
 
     if (count === 0) return;
 
-    // Si es solo una, borramos del tirón. Si son varias, pedimos confirmación.
     if (count === 1) {
       await this.executeDeletion();
     } else {

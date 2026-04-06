@@ -13,3 +13,13 @@ export interface PaginatedSongs {
   limit: number;
   data: Song[];
 }
+
+export interface DeleteSongsResponse {
+  message: string;
+  count: number;
+  storage: {
+    used: string;
+    limit: string;
+    available: string;
+  };
+}

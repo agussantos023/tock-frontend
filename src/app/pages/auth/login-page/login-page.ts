@@ -11,7 +11,7 @@ import { AuthUser } from '../../../services/auth-user';
 })
 export class LoginPage {
   private fb = inject(FormBuilder);
-  private authService = inject(AuthUser);
+  private authUser = inject(AuthUser);
   private router = inject(Router);
 
   errorMessage = signal<string | null>(null);
@@ -22,7 +22,7 @@ export class LoginPage {
     password: ['', [Validators.required]],
   });
 
-  onSubmit() {
+  async onSubmit() {
     if (this.loginForm.invalid) return;
 
     // Reset estado
@@ -31,17 +31,15 @@ export class LoginPage {
 
     const { email, password } = this.loginForm.getRawValue();
 
-    this.authService.login({ email, password }).subscribe({
-      next: () => {
-        console.log('iniciado');
+    try {
+      await this.authUser.login({ email, password });
+      console.log('iniciado');
 
-        this.router.navigate(['/songs']);
-      },
-      error: (err) => {
-        console.error(err);
-        this.errorMessage.set('Usuario o contraseña incorrectos.');
-        this.isSubmitting.set(false);
-      },
-    });
+      this.router.navigate(['/dashboard']);
+    } catch (err: any) {
+      // 'error' es el string que devolvió parseError
+      this.errorMessage.set('Usuario o contraseña incorrectos.');
+      this.isSubmitting.set(false);
+    }
   }
 }

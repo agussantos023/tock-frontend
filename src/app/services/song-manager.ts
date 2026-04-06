@@ -2,13 +2,15 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { firstValueFrom } from 'rxjs';
-import { PaginatedSongs, Song } from '../shared/interface/song.interface';
+import { DeleteSongsResponse, PaginatedSongs, Song } from '../shared/interface/song.interface';
+import { AuthUser } from './auth-user';
 
 @Injectable({
   providedIn: 'root',
 })
 export class SongManager {
   private http = inject(HttpClient);
+  private authUser = inject(AuthUser);
 
   private apiUrl = `${environment.apiUrl}/songs`;
 
@@ -26,14 +28,14 @@ export class SongManager {
     this.error.set(null);
 
     try {
-      const page = this.currentPage();
       const data = await firstValueFrom(
-        this.http.get<PaginatedSongs>(`${this.apiUrl}?page=${page}&limit=${limit}`),
+        this.http.get<PaginatedSongs>(`${this.apiUrl}`, {
+          params: { page: this.currentPage(), limit },
+        }),
       );
 
-      this.isAllSongsLoaded.set(data.data.length < limit); // Marca que se han cargado todas las canciones
-
       this.songs.update((current) => [...current, ...data.data]);
+      this.isAllSongsLoaded.set(data.data.length < limit);
       this.currentPage.update((p) => p + 1);
     } catch (err) {
       this.error.set('Error al cargar canciones');
@@ -49,15 +51,28 @@ export class SongManager {
     await this.loadMore();
   }
 
-  async upload(file: File, title: string) {
-    const formData = new FormData();
-    formData.append('title', title);
-    formData.append('file', file);
+  async delete(target: number[] | 'all') {
+    const payload = {
+      ids: target === 'all' ? 'all' : target,
+    };
 
-    return await firstValueFrom(this.http.post(this.apiUrl, formData));
+    const response = await firstValueFrom(
+      this.http.delete<DeleteSongsResponse>(`${this.apiUrl}`, { body: payload }),
+    );
+
+    this.songs.update((list) => {
+      if (target === 'all') return [];
+
+      const targetIds = target as number[];
+
+      return list.filter((s) => !targetIds.includes(s.id));
+    });
+
+    if (response.storage) {
+      this.authUser.updateStorage(response.storage.used);
+    }
   }
 
-  // song-manager.ts
   async shuffle(limit: number = 15): Promise<Song[]> {
     this.loading.set(true);
 
@@ -74,20 +89,6 @@ export class SongManager {
     } finally {
       this.loading.set(false);
     }
-  }
-
-  async delete(target: number[] | 'all') {
-    const payload = {
-      ids: target === 'all' ? 'all' : target,
-    };
-
-    await firstValueFrom(this.http.delete(`${this.apiUrl}`, { body: payload }));
-
-    // Actualizamos el estado local de forma reactiva
-    this.songs.update((list) => {
-      if (target === 'all') return [];
-      return list.filter((s) => !target.includes(s.id));
-    });
   }
 
   getAudioBlob(songId: number) {
