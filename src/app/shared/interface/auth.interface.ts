@@ -1,3 +1,4 @@
+import { AuthStatus } from './auth-status.type';
 import { UserData } from './user.interface';
 
 export interface LoginRequest {
@@ -10,8 +11,20 @@ export interface RegisterRequest {
   password: string;
 }
 
-export interface AuthResponse {
+export interface CheckAuthResponse {
+  status: AuthStatus;
+  user: UserData;
+}
+
+export interface AuthResponse extends CheckAuthResponse {
   message: string;
-  isVerified: boolean;
-  user?: UserData;
+}
+
+export interface OtpResponse {
+  message: string;
+  status?: AuthStatus;
+}
+
+export interface MessageResponse {
+  message: string;
 }

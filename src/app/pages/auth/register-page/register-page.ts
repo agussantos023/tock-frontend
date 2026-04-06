@@ -11,7 +11,7 @@ import { Router, RouterLink } from '@angular/router';
 })
 export class RegisterPage {
   private fb = inject(FormBuilder);
-  private authService = inject(AuthUser);
+  private authUser = inject(AuthUser);
   private router = inject(Router);
 
   errorMessage = signal<string | null>(null);
@@ -22,7 +22,7 @@ export class RegisterPage {
     password: ['', [Validators.required]],
   });
 
-  onSubmit() {
+  async onSubmit() {
     if (this.registerForm.invalid) return;
 
     // Reset estado
@@ -31,15 +31,13 @@ export class RegisterPage {
 
     const { email, password } = this.registerForm.getRawValue();
 
-    this.authService.register({ email, password }).subscribe({
-      next: () => {
-        this.router.navigate(['/auth/verify-email']);
-      },
-      error: (err) => {
-        console.error(err);
-        this.errorMessage.set('Error al registrar cuenta.');
-        this.isSubmitting.set(false);
-      },
-    });
+    try {
+      await this.authUser.register({ email, password });
+
+      this.router.navigate(['/auth/verify-email']);
+    } catch (err: any) {
+      this.errorMessage.set('Error al registrar cuenta.');
+      this.isSubmitting.set(false);
+    }
   }
 }

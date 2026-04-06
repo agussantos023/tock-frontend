@@ -1,0 +1,37 @@
+@keyframes header-slide-in {
+  from {
+    grid-template-rows: 0fr;
+    opacity: 0;
+    margin-bottom: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    grid-template-rows: 1fr;
+    opacity: 1;
+    margin-bottom: 1.5rem; /* El equivalente a mb-6 */
+    transform: translateY(0);
+  }
+}
+
+@keyframes header-slide-out {
+  from {
+    grid-template-rows: 1fr;
+    opacity: 1;
+    margin-bottom: 1.5rem;
+    transform: translateY(0);
+  }
+  to {
+    grid-template-rows: 0fr;
+    opacity: 0;
+    margin-bottom: 0;
+    transform: translateY(-10px);
+  }
+}
+
+.header-slide-in {
+  animation: header-slide-in 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.header-slide-out {
+  animation: header-slide-out 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}

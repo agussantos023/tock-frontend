@@ -1,6 +1,7 @@
 import {
   AfterViewInit,
   Component,
+  computed,
   ElementRef,
   HostListener,
   inject,
@@ -41,6 +42,22 @@ export class SongsPage implements OnInit, AfterViewInit {
   showDeleteModal = signal(false);
   canDelete = signal(false);
 
+  showBulkDeleteModal = signal(false);
+
+  isSelectionMode = signal(false);
+  selectedIds = signal<Set<number>>(new Set());
+
+  selectionCount = computed(() => this.selectedIds().size);
+  isAllSelected = computed(() => {
+    const songs = this.songManager.songs();
+    return songs.length > 0 && this.selectedIds().size === songs.length;
+  });
+
+  deleteButtonText = computed(() => {
+    if (this.isAllSelected()) return 'Eliminar todas las canciones';
+    return `Eliminar ${this.selectionCount()} ${this.selectionCount() === 1 ? 'canción' : 'canciones'}`;
+  });
+
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
     if (!this.showProfileMenu()) return;
@@ -54,7 +71,11 @@ export class SongsPage implements OnInit, AfterViewInit {
     this.songManager.loadMore();
   }
 
-  toggleForm() {
+  toggleUploadStation() {
+    if (this.isSelectionMode()) {
+      this.isSelectionMode.set(false);
+      this.selectedIds.set(new Set());
+    }
     this.showUploadStation.update((v) => !v);
   }
 
@@ -114,14 +135,78 @@ export class SongsPage implements OnInit, AfterViewInit {
     this.canDelete.set(isSame);
   }
 
-  onConfirmDelete() {
-    this.authUser.deleteAccount().subscribe({
-      next: () => {
-        console.log('Cuenta borrada con éxito');
-      },
-      error: (msg) => {
-        alert(msg);
-      },
+  async onConfirmDelete() {
+    try {
+      await this.authUser.deleteAccount();
+    } catch (err) {
+      alert(err);
+    }
+  }
+
+  toggleSelectionMode() {
+    if (this.showUploadStation()) this.showUploadStation.set(false);
+
+    this.isSelectionMode.update((v) => !v);
+
+    if (!this.isSelectionMode()) {
+      this.selectedIds.set(new Set());
+    }
+  }
+
+  toggleSongSelection(songId: number) {
+    this.selectedIds.update((set) => {
+      const newSet = new Set(set);
+      if (newSet.has(songId)) newSet.delete(songId);
+      else newSet.add(songId);
+      return newSet;
     });
+  }
+
+  selectAll(event: Event) {
+    const checkbox = event.target as HTMLInputElement;
+    if (checkbox.checked) {
+      const allIds = this.songManager.songs().map((s) => s.id);
+      this.selectedIds.set(new Set(allIds));
+    } else {
+      this.selectedIds.set(new Set());
+    }
+  }
+
+  async onBulkDelete() {
+    const count = this.selectionCount();
+
+    if (count === 0) return;
+
+    if (count === 1) {
+      await this.executeDeletion();
+    } else {
+      this.showBulkDeleteModal.set(true);
+    }
+  }
+
+  async executeDeletion() {
+    try {
+      const selectedIdsArray = Array.from(this.selectedIds());
+      const idsToDelete = this.isAllSelected() ? 'all' : selectedIdsArray;
+
+      const current = this.playbackManager.currentSong();
+      if (current) {
+        const isCurrentDeleted = this.isAllSelected() || selectedIdsArray.includes(current.id);
+        if (isCurrentDeleted) this.playbackManager.eject();
+      }
+
+      await this.songManager.delete(idsToDelete);
+
+      // Limpieza
+      this.closeBulkDeleteModal();
+      this.isSelectionMode.set(false);
+      this.selectedIds.set(new Set());
+    } catch (err) {
+      console.error('Error al eliminar:', err);
+    }
+  }
+
+  closeBulkDeleteModal() {
+    this.showBulkDeleteModal.set(false);
   }
 }

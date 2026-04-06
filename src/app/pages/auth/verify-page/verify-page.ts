@@ -9,7 +9,7 @@ import { Router } from '@angular/router';
   styleUrl: './verify-page.css',
 })
 export class VerifyPage {
-  private authUserService = inject(AuthUser);
+  private authUser = inject(AuthUser);
   private router = inject(Router);
 
   otpInputs = viewChildren<ElementRef<HTMLInputElement>>('otpInput');
@@ -21,17 +21,18 @@ export class VerifyPage {
     return this.getCurrentCode().length === this.otpInputs().length;
   }
 
-  onVerify() {
+  async onVerify() {
     this.isSubmitting.set(true);
     this.errorMessage.set('');
 
-    this.authUserService.verifyEmail(this.getCurrentCode()).subscribe({
-      next: () => this.router.navigate(['/songs']),
-      error: (err) => {
-        this.errorMessage.set(err.error.message || 'Código inválido');
-        this.isSubmitting.set(false);
-      },
-    });
+    try {
+      await this.authUser.verifyEmail(this.getCurrentCode());
+
+      this.router.navigate(['/songs']);
+    } catch (err: any) {
+      this.errorMessage.set(err.error.message || 'Código inválido');
+      this.isSubmitting.set(false);
+    }
   }
 
   onPaste(event: ClipboardEvent) {
@@ -50,19 +51,18 @@ export class VerifyPage {
     inputs[lastIndex].nativeElement.focus();
   }
 
-  onResend() {
-    this.authUserService.resendCode().subscribe({
-      next: () => {
-        this.resendTimer.set(60);
-        this.startTimer();
-      },
-      error: (err) => {
-        this.errorMessage.set(
-          err.error.message ||
-            'Temporalmente no se puede enviar códigos, intente de nuevo más tarde.',
-        );
-      },
-    });
+  async onResend() {
+    try {
+      await this.authUser.resendCode();
+
+      this.resendTimer.set(60);
+      this.startTimer();
+    } catch (err: any) {
+      this.errorMessage.set(
+        err.error.message ||
+          'Temporalmente no se puede enviar códigos, intente de nuevo más tarde.',
+      );
+    }
   }
 
   onInput(event: any, index: number) {
@@ -86,9 +86,13 @@ export class VerifyPage {
     }
   }
 
-  onLogout() {
-    this.authUserService.logout();
-    this.router.navigate(['/auth/login']);
+  async onLogout() {
+    try {
+      await this.authUser.logout();
+      this.router.navigate(['/auth/login']);
+    } catch (err) {
+      this.errorMessage.set('Error al cerrar la Sesión');
+    }
   }
 
   private startTimer() {

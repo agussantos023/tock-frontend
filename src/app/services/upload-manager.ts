@@ -19,7 +19,7 @@ export class UploadManager {
 
   queue = signal<UploadTask[]>([]);
   isProcessing = signal<boolean>(false);
-  isStorageFull = signal<boolean>(false); //
+  isStorageFull = signal<boolean>(false);
 
   totalFiles = computed(() => this.queue().length);
 
@@ -226,12 +226,12 @@ export class UploadManager {
 
   clearQueue() {
     if (this.isProcessing()) return;
+
     this.queue.set([]);
     this.isStartUpload.set(false);
   }
 
   clearByStatus(status: UploadStatus) {
-    // Bloqueo de seguridad: No limpiar si estamos procesando
     if (this.isProcessing()) return;
 
     this.queue.update((tasks) => tasks.filter((t) => t.status !== status));

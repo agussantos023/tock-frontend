@@ -1,18 +1,29 @@
 import { HttpClient } from '@angular/common/http';
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, Injector, signal } from '@angular/core';
 import { environment } from '../../environments/environment';
-import { catchError, tap } from 'rxjs/operators';
-import { AuthResponse, LoginRequest, RegisterRequest } from '../shared/interface/auth.interface';
+import { catchError } from 'rxjs/operators';
+import {
+  AuthResponse,
+  CheckAuthResponse,
+  LoginRequest,
+  MessageResponse,
+  OtpResponse,
+  RegisterRequest,
+} from '../shared/interface/auth.interface';
 import { AuthStatus } from '../shared/interface/auth-status.type';
-import { OtpResponse } from '../shared/interface/otp-response.interface';
-import { of, throwError } from 'rxjs';
+import { firstValueFrom, of } from 'rxjs';
 import { UserData } from '../shared/interface/user.interface';
+import { PlaybackManager } from './playback-manager';
+import { Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthUser {
   private http = inject(HttpClient);
+  private injector = inject(Injector);
+  private router = inject(Router);
+
   private apiUrl = `${environment.apiUrl}/auth`;
 
   #status = signal<AuthStatus>('checking');
@@ -38,106 +49,140 @@ export class AuthUser {
 
   public storageStatusColor = computed(() => {
     const percent = this.storagePercent();
-    if (percent >= 90) return '#ef4444'; // Rojo fuerte (text-red-500)
-    if (percent >= 70) return '#f97316'; // Naranja (text-orange-500)
-    return '#6366f1'; // Indigo (text-indigo-500)
+    if (percent >= 90) return '#ef4444'; // text-red-500
+    if (percent >= 70) return '#f97316'; // text-orange-500
+    return '#6366f1'; // text-indigo-500
   });
 
   constructor() {
     this.checkAuthStatus();
   }
 
-  /**
-   * Helper para centralizar la captura de errores
-   */
-  private handleError(err: any) {
-    const message = err.error?.error || err.error?.message || 'Error inesperado en el servidor';
+  async login(credentials: LoginRequest) {
+    try {
+      const res = await firstValueFrom(
+        this.http.post<AuthResponse>(`${this.apiUrl}/login`, credentials),
+      );
 
-    if (err.status >= 500) {
-      console.error('🔥 Error Crítico del Servidor:', message);
+      this.#status.set(res.status);
+
+      this.#userData.set(res.user);
+    } catch (err) {
+      throw this.parseError(err);
     }
-    return throwError(() => message);
   }
 
-  login(credentials: LoginRequest) {
-    return this.http.post<AuthResponse>(`${this.apiUrl}/login`, credentials).pipe(
-      tap((res) => {
-        this.#status.set(res.isVerified ? 'authenticated' : 'unverified');
-        if (res.user) {
-          this.#userData.set(res.user);
-        }
-      }),
-      catchError(this.handleError),
-    );
+  async register(userData: RegisterRequest) {
+    try {
+      const res = await firstValueFrom(
+        this.http.post<AuthResponse>(`${this.apiUrl}/register`, userData),
+      );
+
+      this.#status.set(res.status);
+
+      this.#userData.set(res.user);
+    } catch (err) {
+      throw this.parseError(err);
+    }
   }
 
-  register(userData: RegisterRequest) {
-    return this.http.post<AuthResponse>(`${this.apiUrl}/register`, userData).pipe(
-      tap((res) => {
-        this.#status.set('unverified');
-        if (res.user) {
-          this.#userData.set(res.user);
-        }
-      }),
-      catchError(this.handleError),
-    );
+  async verifyEmail(code: string) {
+    try {
+      const res = await firstValueFrom(
+        this.http.post<OtpResponse>(`${this.apiUrl}/verify-otp`, { otpCode: code }),
+      );
+
+      if (res.status) this.#status.set(res.status);
+    } catch (err) {
+      throw this.parseError(err);
+    }
   }
 
-  verifyEmail(code: string) {
-    return this.http.post<OtpResponse>(`${this.apiUrl}/verify-otp`, { otpCode: code }).pipe(
-      tap(() => this.#status.set('authenticated')),
-      catchError(this.handleError),
-    );
+  async resendCode() {
+    try {
+      const res = await firstValueFrom(
+        this.http.post<OtpResponse>(`${this.apiUrl}/resend-otp`, {}),
+      );
+
+      if (res) console.log(res.message);
+    } catch (err) {
+      throw this.parseError(err);
+    }
   }
 
-  resendCode() {
-    return this.http
-      .post<OtpResponse>(`${this.apiUrl}/resend-otp`, {})
-      .pipe(catchError(this.handleError));
+  async logout() {
+    const playback = this.injector.get(PlaybackManager);
+
+    playback.eject();
+
+    try {
+      const res = await firstValueFrom(
+        this.http.post<MessageResponse>(`${this.apiUrl}/logout`, {}),
+      );
+
+      if (res) console.log(res.message);
+    } catch (err) {
+      throw this.parseError(err);
+    } finally {
+      this.clearAuthData();
+    }
+  }
+
+  async deleteAccount() {
+    try {
+      await firstValueFrom(this.http.delete(`${this.apiUrl}/delete-account`));
+
+      this.clearAuthData();
+    } catch (err) {
+      throw this.parseError(err);
+    }
   }
 
   checkAuthStatus(): void {
-    // Definimos el tipo de respuesta esperado en el .post<...>
     this.http
-      .post<{ status: AuthStatus; user?: UserData }>(`${this.apiUrl}/validate-token`, {})
+      .post<CheckAuthResponse>(`${this.apiUrl}/validate-token`, {})
       .pipe(
         catchError(() => {
-          this.#status.set('unauthenticated');
-          this.#userData.set(null);
+          this.clearAuthData(false);
           return of(null);
         }),
       )
       .subscribe((res) => {
         if (res) {
           this.#status.set(res.status);
-          if (res.user) {
-            this.#userData.set(res.user);
-          }
+          this.#userData.set(res.user);
         }
       });
   }
 
-  logout() {
-    this.http.post(`${this.apiUrl}/logout`, {}).subscribe({
-      next: () => {
-        this.#status.set('unauthenticated');
-        window.location.reload();
-      },
-      error: () => {
-        this.#status.set('unauthenticated');
-        window.location.reload();
-      },
+  updateStorage(newUsed: string, newLimit?: string) {
+    this.#userData.update((data) => {
+      if (!data) return null;
+
+      return {
+        ...data,
+        storage_used: newUsed,
+        ...(newLimit && { storage_limit: newLimit }),
+      };
     });
   }
 
-  deleteAccount() {
-    return this.http.delete(`${this.apiUrl}/delete-account`).pipe(
-      tap(() => {
-        this.#status.set('unauthenticated');
-        this.#userData.set(null);
-        window.location.reload();
-      }),
-      catchError(this.handleError),
-    );
+  // --- MÉTODOS PRIVADOS DE APOYO ---
+
+  private clearAuthData(shouldNavigate: boolean = true) {
+    this.#status.set('unauthenticated');
+    this.#userData.set(null);
+
+    if (shouldNavigate) {
+      this.router.navigate(['/auth/login']);
+    }
+  }
+
+  private parseError(err: any): string {
+    const message = err.error?.error || err.error?.message || 'Error inesperado';
+
+    if (err.status >= 500) console.error('🔥 Error Crítico:', message);
+
+    return message;
   }
 }

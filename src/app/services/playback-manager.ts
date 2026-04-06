@@ -1,6 +1,7 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { SongManager } from './song-manager';
 import { Song } from '../shared/interface/song.interface';
+import { firstValueFrom } from 'rxjs';
 
 const VOLUME_KEY = 'tock_player_volume';
 
@@ -70,13 +71,16 @@ export class PlaybackManager {
       return;
     }
 
+    if (this.audio.src) URL.revokeObjectURL(this.audio.src);
+
     this.currentSong.set(song);
-    this.songManager.getAudioBlob(song.id).subscribe((blob) => {
-      const url = URL.createObjectURL(blob);
-      this.audio.src = url;
-      this.audio.play();
-      this.isPlaying.set(true);
-    });
+
+    const blob = await firstValueFrom(this.songManager.getAudioBlob(song.id));
+    const url = URL.createObjectURL(blob);
+
+    this.audio.src = url;
+    this.audio.play();
+    this.isPlaying.set(true);
   }
 
   togglePlay() {
@@ -124,6 +128,27 @@ export class PlaybackManager {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       // Reproduce automáticamente la primera canción de la nueva lista
       this.playSong(shuffledSongs[0]);
+    }
+  }
+
+  eject() {
+    this.audio.pause();
+
+    if (this.audio.src && this.audio.src.startsWith('blob:')) {
+      URL.revokeObjectURL(this.audio.src);
+    }
+
+    this.audio.src = '';
+    this.audio.load();
+
+    this.currentSong.set(null);
+    this.isPlaying.set(false);
+    this.currentTime.set(0);
+    this.duration.set(0);
+
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.metadata = null;
+      navigator.mediaSession.playbackState = 'none';
     }
   }
 
