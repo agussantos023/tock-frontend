@@ -184,6 +184,8 @@ export class AuthUser {
   // --- MÉTODOS PRIVADOS DE APOYO ---
 
   private clearAuthData(shouldNavigate: boolean = true) {
+    const playbackManager = this.injector.get(PlaybackManager);
+    playbackManager.eject();
     this.#status.set('unauthenticated');
     this.#userData.set(null);
 
