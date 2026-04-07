@@ -11,6 +11,10 @@ export interface RegisterRequest {
   password: string;
 }
 
+export interface RegistrationStatus {
+  available: boolean;
+}
+
 export interface CheckAuthResponse {
   status: AuthStatus;
   user: UserData;

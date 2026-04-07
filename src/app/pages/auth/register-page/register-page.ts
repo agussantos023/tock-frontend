@@ -23,6 +23,12 @@ export class RegisterPage {
 
   errorMessage = signal<string | null>(null);
   isSubmitting = signal(false);
+  isRegisterAvailable = signal<boolean>(true);
+  isLoadingStatus = signal(true);
+
+  constructor() {
+    this.checkStatus();
+  }
 
   registerForm: FormGroup = this.fb.group(
     {
@@ -46,6 +52,13 @@ export class RegisterPage {
     return password && confirmPassword && password.value !== confirmPassword.value
       ? { passwordMismatch: true }
       : null;
+  }
+
+  async checkStatus() {
+    const status = await this.authUser.getRegistrationStatus();
+
+    this.isRegisterAvailable.set(status.available);
+    this.isLoadingStatus.set(false);
   }
 
   async onSubmit() {

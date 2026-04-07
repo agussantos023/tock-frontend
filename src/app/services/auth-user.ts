@@ -9,6 +9,7 @@ import {
   MessageResponse,
   OtpResponse,
   RegisterRequest,
+  RegistrationStatus,
 } from '../shared/interface/auth.interface';
 import { AuthStatus } from '../shared/interface/auth-status.type';
 import { firstValueFrom, of } from 'rxjs';
@@ -83,6 +84,16 @@ export class AuthUser {
       this.#userData.set(res.user);
     } catch (err) {
       throw this.parseError(err);
+    }
+  }
+
+  async getRegistrationStatus(): Promise<RegistrationStatus> {
+    try {
+      return await firstValueFrom(
+        this.http.get<RegistrationStatus>(`${this.apiUrl}/registration-status`),
+      );
+    } catch (err) {
+      return { available: false };
     }
   }
 
