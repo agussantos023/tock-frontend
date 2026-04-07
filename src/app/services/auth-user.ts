@@ -16,6 +16,7 @@ import { firstValueFrom, of } from 'rxjs';
 import { UserData } from '../shared/interface/user.interface';
 import { PlaybackManager } from './playback-manager';
 import { Router } from '@angular/router';
+import { NotificationManager } from './notification-manager';
 
 @Injectable({
   providedIn: 'root',
@@ -24,6 +25,7 @@ export class AuthUser {
   private http = inject(HttpClient);
   private injector = inject(Injector);
   private router = inject(Router);
+  private notificationManager = inject(NotificationManager);
 
   private apiUrl = `${environment.apiUrl}/auth`;
 
@@ -115,7 +117,7 @@ export class AuthUser {
         this.http.post<OtpResponse>(`${this.apiUrl}/resend-otp`, {}),
       );
 
-      if (res) console.log(res.message);
+      this.notificationManager.show('Código enviado correctamente', 'success');
     } catch (err) {
       throw this.parseError(err);
     }
@@ -143,6 +145,7 @@ export class AuthUser {
     try {
       await firstValueFrom(this.http.delete(`${this.apiUrl}/delete-account`));
 
+      this.notificationManager.show('Cuenta eliminada permanentemente', 'info');
       this.clearAuthData();
     } catch (err) {
       throw this.parseError(err);
@@ -192,7 +195,11 @@ export class AuthUser {
   private parseError(err: any): string {
     const message = err.error?.error || err.error?.message || 'Error inesperado';
 
-    if (err.status >= 500) console.error('🔥 Error Crítico:', message);
+    if (err.status >= 500 || err.status === 0) {
+      this.notificationManager.show('Error de conexión con el servidor', 'error');
+    } else {
+      this.notificationManager.show(message, 'error');
+    }
 
     return message;
   }

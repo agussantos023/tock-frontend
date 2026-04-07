@@ -1,11 +1,12 @@
 import { HttpClient, HttpErrorResponse, HttpEventType } from '@angular/common/http';
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, Injector, signal } from '@angular/core';
 import { SongManager } from './song-manager';
 import { environment } from '../../environments/environment';
 import { UploadResponse, UploadStatus, UploadTask } from '../shared/interface/upload.interface';
 import { catchError, concatMap, EMPTY, filter, of, Subject, takeUntil, tap, timer } from 'rxjs';
 import { PlaybackManager } from './playback-manager';
 import { AuthUser } from './auth-user';
+import { NotificationManager } from './notification-manager';
 
 @Injectable({
   providedIn: 'root',
@@ -15,6 +16,7 @@ export class UploadManager {
   private songManager = inject(SongManager);
   private playbackManager = inject(PlaybackManager);
   private authUser = inject(AuthUser);
+  private injector = inject(Injector);
 
   private apiUrl = `${environment.apiUrl}/songs`;
   private readonly MAX_BATCH_SIZE = 50;
@@ -48,11 +50,13 @@ export class UploadManager {
    * Captura y Selección
    */
   addFilesToQueue(files: FileList | File[]) {
+    const notificationManager = this.injector.get(NotificationManager);
+
     const currentQueue = this.queue();
     const newFiles = Array.from(files);
 
     if (currentQueue.length + newFiles.length > this.MAX_BATCH_SIZE) {
-      alert(`Límite máximo de ${this.MAX_BATCH_SIZE} archivos. Por favor, reduce la selección.`);
+      notificationManager.show(`Máximo ${this.MAX_BATCH_SIZE} archivos por lote`, 'info');
       return;
     }
 
@@ -111,6 +115,12 @@ export class UploadManager {
       this.isStartUpload.set(false);
 
       this.songManager.refresh();
+
+      const notificationManager = this.injector.get(NotificationManager);
+      const total = this.successCount();
+
+      if (total > 0) notificationManager.show(`${total} canciones subidas con éxito`, 'success');
+
       return;
     }
 
@@ -214,6 +224,9 @@ export class UploadManager {
       this.isStorageFull.set(true); // Bloqueamos el Dropzone
       this.stopSignal$.next(); // Paramos la cola inmediatamente
       this.isProcessing.set(false);
+
+      const notificationManager = this.injector.get(NotificationManager);
+      notificationManager.show('Almacenamiento lleno. No se pueden subir más canciones.', 'error');
     }
 
     this.updateTaskStatus(id, 'error', 0);

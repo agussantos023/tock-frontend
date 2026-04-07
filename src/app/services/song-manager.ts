@@ -1,10 +1,11 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable, Injector, signal } from '@angular/core';
 import { environment } from '../../environments/environment';
-import { firstValueFrom } from 'rxjs';
+import { catchError, firstValueFrom } from 'rxjs';
 import { DeleteSongsResponse, PaginatedSongs, Song } from '../shared/interface/song.interface';
 import { AuthUser } from './auth-user';
 import { UploadManager } from './upload-manager';
+import { NotificationManager } from './notification-manager';
 
 @Injectable({
   providedIn: 'root',
@@ -55,6 +56,7 @@ export class SongManager {
 
   async delete(target: number[] | 'all') {
     const uploadManager = this.injector.get(UploadManager);
+    const notificationManager = this.injector.get(NotificationManager);
 
     const payload = {
       ids: target === 'all' ? 'all' : target,
@@ -64,6 +66,9 @@ export class SongManager {
       const response = await firstValueFrom(
         this.http.delete<DeleteSongsResponse>(`${this.apiUrl}`, { body: payload }),
       );
+
+      const count = target === 'all' ? 'Todas las' : (target as number[]).length;
+      notificationManager.show(`${count} canciones eliminadas correctamente`, 'success');
 
       this.songs.update((list) => {
         if (target === 'all') return [];
@@ -78,11 +83,14 @@ export class SongManager {
         uploadManager.isStorageFull.set(false);
       }
     } catch (err) {
+      notificationManager.show('No se pudieron eliminar las canciones', 'error');
       this.error.set('Error al eliminar las canciones');
     }
   }
 
   async shuffle(limit: number = 15): Promise<Song[]> {
+    const notificationManager = this.injector.get(NotificationManager);
+
     this.loading.set(true);
 
     try {
@@ -95,14 +103,27 @@ export class SongManager {
       this.isAllSongsLoaded.set(data.data.length < limit);
 
       return data.data;
+    } catch (err) {
+      notificationManager.show('Error al mezclar la biblioteca', 'error');
+
+      throw err;
     } finally {
       this.loading.set(false);
     }
   }
 
   getAudioBlob(songId: number) {
-    return this.http.get(`${this.apiUrl}/${songId}/audio`, {
-      responseType: 'blob', // Decirle que esperamos un archivo binario
-    });
+    const notificationManager = this.injector.get(NotificationManager);
+
+    return this.http
+      .get(`${this.apiUrl}/${songId}/audio`, {
+        responseType: 'blob',
+      })
+      .pipe(
+        catchError((err) => {
+          notificationManager.show('No se pudo obtener el archivo de audio', 'error');
+          throw err;
+        }),
+      );
   }
 }

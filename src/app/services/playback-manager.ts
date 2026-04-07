@@ -1,7 +1,8 @@
-import { inject, Injectable, signal } from '@angular/core';
+import { inject, Injectable, Injector, signal } from '@angular/core';
 import { SongManager } from './song-manager';
 import { Song } from '../shared/interface/song.interface';
 import { firstValueFrom } from 'rxjs';
+import { NotificationManager } from './notification-manager';
 
 const VOLUME_KEY = 'tock_player_volume';
 
@@ -10,6 +11,8 @@ const VOLUME_KEY = 'tock_player_volume';
 })
 export class PlaybackManager {
   private songManager = inject(SongManager);
+  private injector = inject(Injector);
+
   private audio = new Audio();
 
   // Estados
@@ -26,6 +29,13 @@ export class PlaybackManager {
   }
 
   private setupAudioListeners() {
+    const notificationManager = this.injector.get(NotificationManager);
+
+    this.audio.onerror = () => {
+      notificationManager.show('Error en la reproducción del archivo', 'error');
+      this.isPlaying.set(false);
+    };
+
     this.audio.ontimeupdate = () => this.currentTime.set(this.audio.currentTime);
     this.audio.onloadedmetadata = () => {
       this.duration.set(this.audio.duration);
@@ -66,21 +76,29 @@ export class PlaybackManager {
   }
 
   async playSong(song: Song) {
+    const notificationManager = this.injector.get(NotificationManager);
+
     if (this.currentSong()?.id === song.id) {
       this.togglePlay();
       return;
     }
 
-    if (this.audio.src) URL.revokeObjectURL(this.audio.src);
+    try {
+      if (this.audio.src) URL.revokeObjectURL(this.audio.src);
 
-    this.currentSong.set(song);
+      this.currentSong.set(song);
 
-    const blob = await firstValueFrom(this.songManager.getAudioBlob(song.id));
-    const url = URL.createObjectURL(blob);
+      const blob = await firstValueFrom(this.songManager.getAudioBlob(song.id));
+      const url = URL.createObjectURL(blob);
 
-    this.audio.src = url;
-    this.audio.play();
-    this.isPlaying.set(true);
+      this.audio.src = url;
+      this.audio.play();
+      this.isPlaying.set(true);
+    } catch (err) {
+      notificationManager.show(`No se pudo reproducir: ${song.title}`, 'error');
+
+      this.eject();
+    }
   }
 
   togglePlay() {
@@ -107,7 +125,7 @@ export class PlaybackManager {
 
     // si hemos llegado al final absoluto
     if (nextIndex >= updatedList.length) {
-      nextIndex = 0; // Volver al principio
+      nextIndex = 0;
     }
 
     this.playSong(updatedList[nextIndex]);

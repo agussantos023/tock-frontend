@@ -8,7 +8,7 @@
       (click)="playbackManager.togglePlay()"
       class="relative w-18 h-18 flex items-center justify-center group cursor-pointer transition-transform hover:scale-110 active:scale-95"
     >
-      <div class="w-18 h-18 border-4 border-indigo-500 rounded-full absolute z-20"></div>
+      <div class="w-18 h-18 border-4 border-gray-600 rounded-full absolute z-20"></div>
 
       <img
         [class.paused-animation]="!playbackManager.isPlaying()"
@@ -18,7 +18,7 @@
       />
 
       <div
-        class="bg-indigo-500 text-white p-1 rounded-full shadow-lg z-20 flex items-center justify-center"
+        class="bg-gray-600 text-white p-1 rounded-full shadow-lg z-20 flex items-center justify-center"
       >
         @if (playbackManager.isPlaying()) {
           <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
@@ -34,7 +34,7 @@
 
     <button
       (click)="toggleExpand()"
-      class="absolute -left-3 -bottom-3 w-10 h-10 z-40 bg-indigo-500 text-white rounded-full shadow-xl flex items-center justify-center hover:scale-110 active:scale-90 transition-all cursor-pointer group/btn"
+      class="absolute -left-3 -bottom-3 w-10 h-10 z-40 bg-gray-900/95 text-white rounded-full shadow-xl flex items-center justify-center hover:scale-110 active:scale-90 transition-all cursor-pointer group/btn"
     >
       <svg
         class="w-5 h-5 transition-transform duration-300 group-hover/btn:-translate-y-1 group-hover/btn:scale-110"
