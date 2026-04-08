@@ -26,6 +26,8 @@ export class RegisterPage {
   isRegisterAvailable = signal<boolean>(true);
   isLoadingStatus = signal(true);
 
+  showTermsModal = signal(false);
+
   constructor() {
     this.checkStatus();
   }
@@ -35,6 +37,7 @@ export class RegisterPage {
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(8)]],
       confirmPassword: ['', [Validators.required]],
+      acceptTerms: [false, [Validators.requiredTrue]],
     },
     {
       validators: this.passwordMatchValidator,
@@ -80,5 +83,9 @@ export class RegisterPage {
       this.errorMessage.set(msg);
       this.isSubmitting.set(false);
     }
+  }
+
+  toggleTermsModal() {
+    this.showTermsModal.set(!this.showTermsModal());
   }
 }
